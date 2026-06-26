@@ -123,10 +123,19 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
       state = state.copyWith(isUploading: true);
       final aiResult = await Api.sendPenData(payload);
 
+      if (aiResult.status == JobStatus.error) {
+        state = state.copyWith(
+          isUploading: false,
+          aiResult: null,
+          error: aiResult.message ?? 'AI server returned an error.',
+        );
+        return null;
+      }
+
       state = state.copyWith(
         isUploading: false,
         aiResult: aiResult,
-        error: aiResult.status == JobStatus.error ? aiResult.message : null,
+        error: null,
       );
       return aiResult;
     } catch (e) {

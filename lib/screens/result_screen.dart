@@ -13,7 +13,7 @@ class ResultScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
+    final isError = result.status == JobStatus.error;
 
     return PopScope(
       canPop: false,
@@ -23,15 +23,16 @@ class ResultScreen extends ConsumerWidget {
         }
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 20,top: 81,right: 20),
+        padding: const EdgeInsets.only(left: 20, top: 81, right: 20),
         child: Center(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment:  MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
-              _AiRiskCard(result: result),
-
+              if (isError)
+                _ErrorResultCard(result: result)
+              else
+                _AiRiskCard(result: result),
             ],
           ),
         ),
@@ -47,25 +48,17 @@ class _AiRiskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int score = (result.confidence! * 100).toInt();
-    String risk;
-    String output = (result.prediction! =="PD")?"has Parkinson":"doesn't have Parkinson";
-    if(score > 80)
-      {
-        risk = "High Risk";
-      }
-    else if(score > 50)
-      {
-        risk = "moderate Risk";
-      }
-    else if(score > 35)
-    {
-      risk = "slight Risk";
-    }
-    else
-    {
-      risk = "No Risk";
-    }
+    final score = ((result.confidence ?? 0.0) * 100).toInt();
+    final risk = score > 80
+        ? 'High Risk'
+        : score > 50
+            ? 'Moderate Risk'
+            : score > 35
+                ? 'Slight Risk'
+                : 'No Risk';
+    final output = (result.prediction ?? '').toUpperCase() == 'PD'
+        ? 'has Parkinson'
+        : 'doesn\'t have Parkinson';
 
 
 
@@ -139,6 +132,61 @@ class _AiRiskCard extends StatelessWidget {
                 style: _bodyStyle,
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorResultCard extends StatelessWidget {
+  final Response result;
+
+  const _ErrorResultCard({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFBC4B4B),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Center(
+            child: Text(
+              'AI Error',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            result.message ?? 'An error occurred while processing the pen data.',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFFBC4B4B),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Go back'),
+            ),
           ),
         ],
       ),

@@ -278,7 +278,15 @@ class _BluetoothConnectionPageState extends ConsumerState<BluetoothConnectionPag
                         .read(smartPenNotifierProvider.notifier)
                         .processRecording(data);
 
-                    if (!mounted || result == null) return;
+                    if (!mounted) return;
+                    if (result == null) {
+                      final error = ref.read(smartPenNotifierProvider).error;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(error ?? 'Failed to process pen data.')),
+                      );
+                      return;
+                    }
+
                     context.push('/results', extra: result);
                   } catch (e) {
                     if (!mounted) return;
@@ -393,10 +401,29 @@ class _BluetoothConnectionPageState extends ConsumerState<BluetoothConnectionPag
                     style: TextStyle(color: Colors.grey, fontSize: 20),
                   ),
                 )
-              : CustomPaint(
-                  painter: LineChartPainter(data: data, color: color),
-                  child: Container(),
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: RotatedBox(
+                        quarterTurns: 3,
+                        child: Text('Value', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                      ),
+                    ),
+                    Expanded(
+                      child: CustomPaint(
+                        painter: LineChartPainter(data: data, color: color),
+                        child: Container(),
+                      ),
+                    ),
+                  ],
                 ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text('Time', style: const TextStyle(color: Colors.grey, fontSize: 11)),
         ),
       ],
     );
@@ -409,7 +436,7 @@ class _BluetoothConnectionPageState extends ConsumerState<BluetoothConnectionPag
         Text(title, style: const TextStyle(color: Color(0xFF1F3E6C), fontWeight: FontWeight.w500, fontSize: 14)),
         const SizedBox(height: 8),
         SizedBox(
-          height: 80,
+          height: 112,
           child: Center(
             child: CustomPaint(
               size: const Size(80, 80),
@@ -420,6 +447,16 @@ class _BluetoothConnectionPageState extends ConsumerState<BluetoothConnectionPag
               ),
             ),
           ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 6,
+          children: [
+            _buildRadarLegend('Pressure', const Color(0xFF46D1C0)),
+            _buildRadarLegend('Smoothness', const Color(0xFF5D9ECC)),
+            _buildRadarLegend('Tremor', const Color(0xFFBC4B4B)),
+          ],
         ),
       ],
     );
@@ -452,10 +489,10 @@ class _BluetoothConnectionPageState extends ConsumerState<BluetoothConnectionPag
             height: 56,
             child: ElevatedButton(
               onPressed: state.aiResult != null ? () {
-                context.push('/results', extra: state.aiResult);
+                ref.context.push('/results', extra: state.aiResult);
               } : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5D9ECC),
+                backgroundColor: state.aiResult != null ? const Color(0xFF5D9ECC) : const Color(0xFF5D9ECC).withOpacity(0.5),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
@@ -495,6 +532,26 @@ class _BluetoothConnectionPageState extends ConsumerState<BluetoothConnectionPag
       return '-';
     }
     return '${value.clamp(0, 100).toStringAsFixed(0)}%';
+  }
+
+  Widget _buildRadarLegend(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFF1F3E6C), fontSize: 11),
+        ),
+      ],
+    );
   }
 }
 
@@ -560,33 +617,94 @@ class RadarChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
     
-    final paint = Paint()
+    final gridPaint = Paint()
       ..color = Colors.grey.withOpacity(0.2)
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
 
-    // Draw concentric pentagons
     for (var i = 1; i <= 3; i++) {
       final r = radius * (i / 3);
-      canvas.drawCircle(center, r, paint);
+      canvas.drawCircle(center, r, gridPaint);
     }
-
-    final dataPaint = Paint()
-      ..color = const Color(0xFF466057).withOpacity(0.6)
-      ..style = PaintingStyle.fill;
 
     final pressureRadius = (pressure.clamp(0, 1) as double) * radius;
     final smoothnessRadius = (smoothness.clamp(0, 100) as double) / 100 * radius;
     final tremorRadius = (tremor.clamp(0, 10) as double) / 10 * radius;
 
-    final shapePath = Path();
-    shapePath.moveTo(center.dx, center.dy - pressureRadius);
-    shapePath.lineTo(center.dx + smoothnessRadius * 0.85, center.dy - smoothnessRadius * 0.25);
-    shapePath.lineTo(center.dx + tremorRadius * 0.45, center.dy + tremorRadius * 0.75);
-    shapePath.lineTo(center.dx - pressureRadius * 0.55, center.dy + pressureRadius * 0.65);
-    shapePath.lineTo(center.dx - smoothnessRadius * 0.85, center.dy - smoothnessRadius * 0.25);
-    shapePath.close();
-    
-    canvas.drawPath(shapePath, dataPaint);
+    final pressureEnd = Offset(center.dx, center.dy - pressureRadius);
+    final smoothnessEnd = Offset(center.dx + smoothnessRadius * 0.85, center.dy + smoothnessRadius * 0.25);
+    final tremorEnd = Offset(center.dx - tremorRadius * 0.85, center.dy + tremorRadius * 0.25);
+
+    final pressurePaint = Paint()
+      ..color = const Color(0xFF46D1C0)
+      ..strokeWidth = 1.5;
+    final smoothnessPaint = Paint()
+      ..color = const Color(0xFF5D9ECC)
+      ..strokeWidth = 1.5;
+    final tremorPaint = Paint()
+      ..color = const Color(0xFFBC4B4B)
+      ..strokeWidth = 1.5;
+
+    canvas.drawLine(center, pressureEnd, pressurePaint);
+    canvas.drawLine(center, smoothnessEnd, smoothnessPaint);
+    canvas.drawLine(center, tremorEnd, tremorPaint);
+
+    final shapePath = Path()
+      ..moveTo(pressureEnd.dx, pressureEnd.dy)
+      ..lineTo(smoothnessEnd.dx, smoothnessEnd.dy)
+      ..lineTo(tremorEnd.dx, tremorEnd.dy)
+      ..close();
+
+    final fillPaint = Paint()
+      ..color = const Color(0xFF46D1C0).withOpacity(0.22)
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = const Color(0xFF46D1C0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    canvas.drawPath(shapePath, fillPaint);
+    canvas.drawPath(shapePath, strokePaint);
+
+    final pressurePointPaint = Paint()
+      ..color = const Color(0xFF46D1C0)
+      ..style = PaintingStyle.fill;
+    final smoothnessPointPaint = Paint()
+      ..color = const Color(0xFF5D9ECC)
+      ..style = PaintingStyle.fill;
+    final tremorPointPaint = Paint()
+      ..color = const Color(0xFFBC4B4B)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(pressureEnd, 3.2, pressurePointPaint);
+    canvas.drawCircle(smoothnessEnd, 3.2, smoothnessPointPaint);
+    canvas.drawCircle(tremorEnd, 3.2, tremorPointPaint);
+
+    final axisPaint = Paint()
+      ..color = Colors.grey.withOpacity(0.28)
+      ..strokeWidth = 1;
+
+    final topLabel = Offset(center.dx, center.dy - radius - 16);
+    final rightLabel = Offset(center.dx + radius * 0.9, center.dy - 8);
+    final leftLabel = Offset(center.dx - radius * 0.9 - 28, center.dy - 8);
+
+    canvas.drawLine(center, Offset(center.dx, center.dy - radius), axisPaint);
+    canvas.drawLine(center, Offset(center.dx + radius * 0.85, center.dy - radius * 0.25), axisPaint);
+    canvas.drawLine(center, Offset(center.dx - radius * 0.85, center.dy - radius * 0.25), axisPaint);
+
+    const labelStyle = TextStyle(color: Colors.grey, fontSize: 10);
+    _drawLabel(canvas, topLabel, 'Pressure', labelStyle);
+    _drawLabel(canvas, rightLabel, 'Smoothness', labelStyle);
+    _drawLabel(canvas, leftLabel, 'Tremor', labelStyle);
+  }
+
+  void _drawLabel(Canvas canvas, Offset position, String text, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(canvas, position);
   }
 
   @override
