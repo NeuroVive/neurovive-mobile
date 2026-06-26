@@ -77,14 +77,18 @@ class Api {
   }
 
   static Future<Response> sendPenFeatures(List<double> features) async {
-    final baseUrl = Uri.parse(await ApiConfig.loadBaseUrl());
-    print("the link is $baseUrl");
+    return sendPenData({'features': features});
+  }
+
+  static Future<Response> sendPenData(Map<String, dynamic> payload) async {
+    final baseUrl = Uri.parse(await ApiConfig.loadAiBaseUrl());
+    print("the ai link is $baseUrl");
 
     final uri = Uri.parse('$baseUrl/pen');
     final response = await http.post(
       uri,
       headers: const {HttpHeaders.contentTypeHeader: 'application/json'},
-      body: jsonEncode({'features': features}),
+      body: jsonEncode(payload),
     );
 
     if (response.statusCode != 200 && response.statusCode != 500) {

@@ -118,4 +118,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get english => 'English';
+
+  @override
+  String get smartPenTitle => 'NeuroVive Smart Pen';
+
+  @override
+  String get connected => 'Connected';
+
+  @override
+  String get disconnected => 'Disconnected';
+
+  @override
+  String get disconnect => 'Disconnect';
+
+  @override
+  String get startRecording => 'Start Recording';
+
+  @override
+  String get stopRecording => 'Stop Recording';
+
+  @override
+  String get selectTask => 'Select Task:';
+
+  @override
+  String get spiralTest => 'Spiral Test';
+
+  @override
+  String get pressure => 'Pressure (kpa)';
+
+  @override
+  String get acceleration => 'Acceleration (g)';
+
+  @override
+  String get motionTremor => 'Motion Tremor (Hz)';
+
+  @override
+  String get pressureStability => 'Pressure Stability';
+
+  @override
+  String get tremorScore => 'Tremor Score';
+
+  @override
+  String get motionSmoothness => 'Motion Smoothness';
+
+  @override
+  String get pressureIndex => 'Pressure Irregularity Index';
+
+  @override
+  String get viewFullReport => 'View Full Report';
+
+  @override
+  String get connecting => 'Connecting...';
 }

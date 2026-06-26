@@ -118,4 +118,55 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get english => 'الإنجليزية';
+
+  @override
+  String get smartPenTitle => 'قلم NeuroVive الذكي';
+
+  @override
+  String get connected => 'متصل';
+
+  @override
+  String get disconnected => 'غير متصل';
+
+  @override
+  String get disconnect => 'قطع الاتصال';
+
+  @override
+  String get startRecording => 'بدء التسجيل';
+
+  @override
+  String get stopRecording => 'إيقاف التسجيل';
+
+  @override
+  String get selectTask => 'اختر المهمة:';
+
+  @override
+  String get spiralTest => 'اختبار الحلزون';
+
+  @override
+  String get pressure => 'الضغط (kpa)';
+
+  @override
+  String get acceleration => 'التسارع (g)';
+
+  @override
+  String get motionTremor => 'اهتزاز الحركة (Hz)';
+
+  @override
+  String get pressureStability => 'ثبات الضغط';
+
+  @override
+  String get tremorScore => 'درجة الرعشة';
+
+  @override
+  String get motionSmoothness => 'سلاسة الحركة';
+
+  @override
+  String get pressureIndex => 'مؤشر عدم انتظام الضغط';
+
+  @override
+  String get viewFullReport => 'عرض التقرير الكامل';
+
+  @override
+  String get connecting => 'جاري الاتصال...';
 }

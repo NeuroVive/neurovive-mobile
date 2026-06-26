@@ -35,5 +35,22 @@
   "smartPenTest": "اختبار القلم الذكي",
   "next": "التالي",
   "arabic": "العربية",
-  "english": "الإنجليزية"
+  "english": "الإنجليزية",
+  "smartPenTitle": "قلم NeuroVive الذكي",
+  "connected": "متصل",
+  "disconnected": "غير متصل",
+  "disconnect": "قطع الاتصال",
+  "startRecording": "بدء التسجيل",
+  "stopRecording": "إيقاف التسجيل",
+  "selectTask": "اختر المهمة:",
+  "spiralTest": "اختبار الحلزون",
+  "pressure": "الضغط (kpa)",
+  "acceleration": "التسارع (g)",
+  "motionTremor": "اهتزاز الحركة (Hz)",
+  "pressureStability": "ثبات الضغط",
+  "tremorScore": "درجة الرعشة",
+  "motionSmoothness": "سلاسة الحركة",
+  "pressureIndex": "مؤشر عدم انتظام الضغط",
+  "viewFullReport": "عرض التقرير الكامل",
+  "connecting": "جاري الاتصال..."
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,6 +35,8 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
   }
 
   Future<Response?> processRecording(PenRecordingData recording) async {
+    final displayData = SmartPenDisplayData.fromRecording(recording);
+
     if (!state.isInitialized) {
       await initialize();
     }
@@ -51,44 +55,73 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
       aiResult: null,
       recordedSamples: recording.sampleCount,
       recordingDuration: recording.duration,
+      displayData: displayData,
     );
 
     try {
-      final features = _service.computeFeatures(
-        x: recording.x,
-        y: recording.y,
-        pressure: recording.pressure,
-        azimuth: recording.azimuth,
-        altitude: recording.altitude,
-        accX: recording.accX,
-        accY: recording.accY,
-      );
+      List<double>? features;
+      List<double>? statistics;
+      List<int>? buttonStatus;
+      final extractionErrors = <String>[];
 
-      if (kDebugMode) {
+      try {
+        features = _service.computeFeatures(
+          x: recording.x,
+          y: recording.y,
+          pressure: recording.pressure,
+          azimuth: recording.azimuth,
+          altitude: recording.altitude,
+          accX: recording.accX,
+          accY: recording.accY,
+        );
+
+        if (features == null) {
+          extractionErrors.add(_service.getLastError());
+        }
+      } catch (e) {
+        extractionErrors.add('features: $e');
+      }
+
+      try {
+        statistics = _service.computeStatisticalSingle(recording.pressure);
+      } catch (e) {
+        extractionErrors.add('statistics: $e');
+      }
+
+      try {
+        buttonStatus = _service.computeButtonStatus(recording.pressure);
+      } catch (e) {
+        extractionErrors.add('button_status: $e');
+      }
+
+      if (kDebugMode && recording.x.isNotEmpty && recording.y.isNotEmpty) {
         print('x: ${recording.x.last}, y: ${recording.y.last}');
       }
 
-      if (features == null) {
+      final payload = <String, dynamic>{
+        if (features != null) 'features': features,
+        if (statistics != null) 'statistics': statistics,
+        if (buttonStatus != null) 'button_status': buttonStatus,
+      };
+
+      if (payload.isEmpty) {
         state = state.copyWith(
           isComputing: false,
-          error: _service.getLastError(),
+          error: extractionErrors.join('\n'),
         );
         return null;
       }
-
-      final statistics = _service.computeStatisticalSingle(recording.pressure);
-      final buttonStatus = _service.computeButtonStatus(recording.pressure);
 
       state = state.copyWith(
         isComputing: false,
         features: features,
         statistics: statistics,
         buttonStatus: buttonStatus,
-        error: null,
+        error: extractionErrors.isEmpty ? null : extractionErrors.join('\n'),
       );
 
       state = state.copyWith(isUploading: true);
-      final aiResult = await Api.sendPenFeatures(features);
+      final aiResult = await Api.sendPenData(payload);
 
       state = state.copyWith(
         isUploading: false,
@@ -164,6 +197,7 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
       error: null,
       recordedSamples: 0,
       recordingDuration: null,
+      displayData: null,
     );
   }
 
@@ -184,6 +218,7 @@ class SmartPenState {
     this.aiResult,
     this.recordedSamples = 0,
     this.recordingDuration,
+    this.displayData,
     this.error,
   });
 
@@ -197,6 +232,7 @@ class SmartPenState {
   final Response? aiResult;
   final int recordedSamples;
   final Duration? recordingDuration;
+  final SmartPenDisplayData? displayData;
   final String? error;
 
   SmartPenState copyWith({
@@ -210,6 +246,7 @@ class SmartPenState {
     Object? aiResult = _smartPenStateUnset,
     int? recordedSamples,
     Object? recordingDuration = _smartPenStateUnset,
+    Object? displayData = _smartPenStateUnset,
     Object? error = _smartPenStateUnset,
   }) {
     return SmartPenState(
@@ -233,10 +270,98 @@ class SmartPenState {
       recordingDuration: identical(recordingDuration, _smartPenStateUnset)
           ? this.recordingDuration
           : recordingDuration as Duration?,
+      displayData: identical(displayData, _smartPenStateUnset)
+          ? this.displayData
+          : displayData as SmartPenDisplayData?,
       error: identical(error, _smartPenStateUnset)
           ? this.error
           : error as String?,
     );
+  }
+}
+
+class SmartPenDisplayData {
+  const SmartPenDisplayData({
+    required this.pressureSeries,
+    required this.accelerationSeries,
+    required this.tremorSeries,
+    required this.pressureIndex,
+    required this.motionSmoothness,
+    required this.tremorScore,
+  });
+
+  final List<double> pressureSeries;
+  final List<double> accelerationSeries;
+  final List<double> tremorSeries;
+  final double pressureIndex;
+  final double motionSmoothness;
+  final double tremorScore;
+
+  factory SmartPenDisplayData.fromRecording(PenRecordingData recording) {
+    final acceleration = <double>[];
+    for (var i = 0; i < recording.sampleCount; i++) {
+      final ax = _safeValue(recording.accX, i);
+      final ay = _safeValue(recording.accY, i);
+      acceleration.add(math.sqrt((ax * ax) + (ay * ay)));
+    }
+
+    final tremor = <double>[];
+    for (var i = 1; i < acceleration.length; i++) {
+      tremor.add((acceleration[i] - acceleration[i - 1]).abs());
+    }
+
+    final pressureMean = _mean(recording.pressure);
+    final pressureVariation = _standardDeviation(recording.pressure);
+    final accMean = _mean(acceleration);
+    final tremorMean = _mean(tremor);
+
+    return SmartPenDisplayData(
+      pressureSeries: _downsample(recording.pressure, maxPoints: 24),
+      accelerationSeries: _downsample(acceleration, maxPoints: 24),
+      tremorSeries: _downsample(tremor, maxPoints: 24),
+      pressureIndex: pressureMean,
+      motionSmoothness: (100 - (pressureVariation + tremorMean) * 100)
+          .clamp(0, 100)
+          .toDouble(),
+      tremorScore: accMean == 0 ? 0 : (tremorMean / accMean) * 10,
+    );
+  }
+
+  static double _safeValue(List<double> values, int index) {
+    if (index < 0 || index >= values.length) {
+      return 0;
+    }
+    return values[index];
+  }
+
+  static double _mean(List<double> values) {
+    if (values.isEmpty) {
+      return 0;
+    }
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
+  static double _standardDeviation(List<double> values) {
+    if (values.length < 2) {
+      return 0;
+    }
+    final avg = _mean(values);
+    final variance = values
+            .map((value) => math.pow(value - avg, 2).toDouble())
+            .reduce((a, b) => a + b) /
+        values.length;
+    return math.sqrt(variance);
+  }
+
+  static List<double> _downsample(List<double> values, {required int maxPoints}) {
+    if (values.length <= maxPoints) {
+      return values;
+    }
+
+    final step = values.length / maxPoints;
+    return List.generate(maxPoints, (index) {
+      return values[(index * step).floor().clamp(0, values.length - 1)];
+    });
   }
 }
 

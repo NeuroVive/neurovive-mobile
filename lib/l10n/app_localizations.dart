@@ -316,6 +316,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get english;
+
+  /// No description provided for @smartPenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NeuroVive Smart Pen'**
+  String get smartPenTitle;
+
+  /// No description provided for @connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get connected;
+
+  /// No description provided for @disconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get disconnected;
+
+  /// No description provided for @disconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnect;
+
+  /// No description provided for @startRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Recording'**
+  String get startRecording;
+
+  /// No description provided for @stopRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Recording'**
+  String get stopRecording;
+
+  /// No description provided for @selectTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Task:'**
+  String get selectTask;
+
+  /// No description provided for @spiralTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Spiral Test'**
+  String get spiralTest;
+
+  /// No description provided for @pressure.
+  ///
+  /// In en, this message translates to:
+  /// **'Pressure (kpa)'**
+  String get pressure;
+
+  /// No description provided for @acceleration.
+  ///
+  /// In en, this message translates to:
+  /// **'Acceleration (g)'**
+  String get acceleration;
+
+  /// No description provided for @motionTremor.
+  ///
+  /// In en, this message translates to:
+  /// **'Motion Tremor (Hz)'**
+  String get motionTremor;
+
+  /// No description provided for @pressureStability.
+  ///
+  /// In en, this message translates to:
+  /// **'Pressure Stability'**
+  String get pressureStability;
+
+  /// No description provided for @tremorScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Tremor Score'**
+  String get tremorScore;
+
+  /// No description provided for @motionSmoothness.
+  ///
+  /// In en, this message translates to:
+  /// **'Motion Smoothness'**
+  String get motionSmoothness;
+
+  /// No description provided for @pressureIndex.
+  ///
+  /// In en, this message translates to:
+  /// **'Pressure Irregularity Index'**
+  String get pressureIndex;
+
+  /// No description provided for @viewFullReport.
+  ///
+  /// In en, this message translates to:
+  /// **'View Full Report'**
+  String get viewFullReport;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get connecting;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

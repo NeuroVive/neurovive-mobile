@@ -35,5 +35,22 @@
   "smartPenTest": "Smart Pen Test",
   "next": "Next",
   "arabic": "Arabic",
-  "english": "English"
+  "english": "English",
+  "smartPenTitle": "NeuroVive Smart Pen",
+  "connected": "Connected",
+  "disconnected": "Disconnected",
+  "disconnect": "Disconnect",
+  "startRecording": "Start Recording",
+  "stopRecording": "Stop Recording",
+  "selectTask": "Select Task:",
+  "spiralTest": "Spiral Test",
+  "pressure": "Pressure (kpa)",
+  "acceleration": "Acceleration (g)",
+  "motionTremor": "Motion Tremor (Hz)",
+  "pressureStability": "Pressure Stability",
+  "tremorScore": "Tremor Score",
+  "motionSmoothness": "Motion Smoothness",
+  "pressureIndex": "Pressure Irregularity Index",
+  "viewFullReport": "View Full Report",
+  "connecting": "Connecting..."
 }

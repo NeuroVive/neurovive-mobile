@@ -13,6 +13,7 @@ enum BluetoothConnectionState {
 }
 
 class BluetoothSensorService {
+  bool _isDisposed = false;
   final PacketParser _parser = PacketParser();
   final StreamController<SensorPacket> _packetController =
       StreamController<SensorPacket>.broadcast();
@@ -37,6 +38,8 @@ class BluetoothSensorService {
   StreamSubscription? _connectionSub;
   StreamSubscription? _notificationSub;
   bool _isScanning = false;
+  bool _shouldBeScanning = false;
+  bool _isConnecting = false;
   bool _isRecordingSession = false;
   DateTime? _recordingStartedAt;
   DateTime? _recordingStoppedAt;
@@ -64,8 +67,16 @@ class BluetoothSensorService {
   }
 
   Future<void> initialize() async {
+    if (_isDisposed) return;
     _currentState = BluetoothConnectionState.disconnected;
-    _connectionStateController.add(_currentState);
+    _updateState(_currentState);
+  }
+
+  void _updateState(BluetoothConnectionState state) {
+    _currentState = state;
+    if (!_connectionStateController.isClosed) {
+      _connectionStateController.add(_currentState);
+    }
   }
 
   Future<bool> checkAndRequestPermissions() async {
@@ -73,15 +84,13 @@ class BluetoothSensorService {
       final bleState = await UniversalBle.getBluetoothAvailabilityState();
       if (bleState == AvailabilityState.unsupported) {
         _errorMessage = 'Bluetooth is not available on this device';
-        _currentState = BluetoothConnectionState.error;
-        _connectionStateController.add(_currentState);
+        _updateState(BluetoothConnectionState.error);
         return false;
       }
 
       if (bleState != AvailabilityState.poweredOn) {
         _errorMessage = 'Please enable Bluetooth';
-        _currentState = BluetoothConnectionState.error;
-        _connectionStateController.add(_currentState);
+        _updateState(BluetoothConnectionState.error);
         return false;
       }
 
@@ -91,8 +100,7 @@ class BluetoothSensorService {
         status = await UniversalBle.hasPermissions();
         if (status != true) {
           _errorMessage = 'Bluetooth permissions denied';
-          _currentState = BluetoothConnectionState.error;
-          _connectionStateController.add(_currentState);
+          _updateState(BluetoothConnectionState.error);
           return false;
         }
       }
@@ -100,8 +108,7 @@ class BluetoothSensorService {
       return true;
     } catch (e) {
       _errorMessage = 'Permission check failed: $e';
-      _currentState = BluetoothConnectionState.error;
-      _connectionStateController.add(_currentState);
+      _updateState(BluetoothConnectionState.error);
       return false;
     }
   }
@@ -117,130 +124,213 @@ class BluetoothSensorService {
     }
   }
 
-  Future<void> startScan() async {
+  Future<void> startScan({String? targetName}) async {
+    if (_isDisposed) return;
+    print('BluetoothSensorService: startScan (Target: $targetName)');
+
+    _shouldBeScanning = true;
     if (!await checkAndRequestPermissions()) {
       return;
     }
 
+    if (!_shouldBeScanning || _isDisposed) return;
+
     try {
+      // Force stop any existing scan or connection attempts
+      await _stopHardwareScan();
+      if (!_shouldBeScanning || _isDisposed) return;
+
+      // First, check if already connected by the OS
+      if (targetName != null) {
+        try {
+          final connectedDevices = await UniversalBle.getSystemDevices(
+            timeout: const Duration(seconds: 5),
+          );
+          for (var device in connectedDevices) {
+            if (device.name == targetName) {
+              print('BluetoothSensorService: Target device already connected to OS, connecting in app...');
+              await connectToDevice(device);
+              return;
+            }
+          }
+        } catch (e) {
+          print('BluetoothSensorService: Error checking connected devices: $e');
+        }
+      }
+
+      if (!_shouldBeScanning || _isDisposed) return;
+
       _isScanning = true;
-      _currentState = BluetoothConnectionState.scanning;
-      _connectionStateController.add(_currentState);
+      _updateState(BluetoothConnectionState.scanning);
 
       _scanResultsController = StreamController<BleDevice>.broadcast();
-      print('Started scanning');
 
+      await _scanSub?.cancel();
       _scanSub = UniversalBle.scanStream.listen(
         (BleDevice bleDevice) {
-          print('Found device: ${bleDevice.name} (${bleDevice.deviceId})');
-          _scanResultsController.add(bleDevice);
+          if (!_shouldBeScanning || _isDisposed) return;
+          
+          if (!_scanResultsController.isClosed) {
+            _scanResultsController.add(bleDevice);
+          }
+          
+          if (targetName != null && bleDevice.name == targetName) {
+            print('BluetoothSensorService: Target device found during scan: ${bleDevice.name}');
+            connectToDevice(bleDevice);
+          }
         },
         onError: (error) {
+          if (_isDisposed) return;
           _errorMessage = 'Scan error: $error';
-          _currentState = BluetoothConnectionState.error;
-          _connectionStateController.add(_currentState);
+          _updateState(BluetoothConnectionState.error);
         },
       );
 
       await UniversalBle.startScan();
-
-      Future.delayed(const Duration(seconds: 50), () {
-        if (_isScanning) {
-          stopScan();
-        }
-      });
     } catch (e) {
+      if (_isDisposed) return;
+      _isScanning = false;
       _errorMessage = 'Failed to start scan: $e';
-      _currentState = BluetoothConnectionState.error;
-      _connectionStateController.add(_currentState);
+      _updateState(BluetoothConnectionState.error);
     }
   }
 
   Future<void> stopScan() async {
-    _isScanning = false;
-    await UniversalBle.stopScan();
+    print('BluetoothSensorService: stopScan');
+    _shouldBeScanning = false;
+
+    await _stopHardwareScan();
+  }
+
+  Future<void> _stopHardwareScan() async {
     await _scanSub?.cancel();
     _scanSub = null;
 
-    if (_currentState == BluetoothConnectionState.scanning) {
-      _currentState = BluetoothConnectionState.disconnected;
-      _connectionStateController.add(_currentState);
+    // Force stop hardware scan always when requested
+    try {
+      await UniversalBle.stopScan();
+    } catch (_) {}
+
+    if (!_isScanning) return;
+
+    _isScanning = false;
+    if (!_isDisposed && _currentState == BluetoothConnectionState.scanning) {
+      _updateState(BluetoothConnectionState.disconnected);
     }
   }
 
   Future<void> connectToDevice(BleDevice device) async {
+    if (_isDisposed || _isConnecting) return;
+    
+    // Prevent re-connecting to the same device if already connected
+    if (_currentState == BluetoothConnectionState.connected && connectedDevice?.deviceId == device.deviceId) {
+      print('BluetoothSensorService: Already connected to this device');
+      return;
+    }
+
+    _isConnecting = true;
     try {
+      print('BluetoothSensorService: Connecting to ${device.name} (${device.deviceId})');
+      _shouldBeScanning = false;
       _errorMessage = null;
-      _currentState = BluetoothConnectionState.connecting;
-      _connectionStateController.add(_currentState);
+      _updateState(BluetoothConnectionState.connecting);
 
       await stopScan();
-      await device.connect();
-      connectedDevice = device;
+      if (_isDisposed) return;
 
-      print('Requesting MTU 64...');
-      try {
-        final mtu = await device.requestMtu(64);
-        print('MTU negotiated to: $mtu bytes');
-        if (mtu < PacketParser.packetSize) {
-          print('WARNING: MTU $mtu is less than packet size ${PacketParser.packetSize}');
-        }
-      } catch (e) {
-        print('MTU request failed: $e - continuing with default MTU');
+      await device.connect();
+      if (_isDisposed) {
+        await device.disconnect();
+        return;
       }
 
+      connectedDevice = device;
+      print('BluetoothSensorService: Device connected');
+
+      // MTU Negotiation
+      try {
+        await device.requestMtu(64);
+      } catch (_) {}
+
+      // Monitor connection state
+      await _connectionSub?.cancel();
       _connectionSub = device.connectionStream.listen(
         (isConnected) {
-          print('Connection state changed: $isConnected');
+          if (_isDisposed) return;
+          print('BluetoothSensorService: Connection state changed: $isConnected');
           if (isConnected) {
-            _currentState = BluetoothConnectionState.connected;
+            _updateState(BluetoothConnectionState.connected);
           } else {
-            _currentState = BluetoothConnectionState.disconnected;
-            connectedDevice = null;
-            resetRecordingSession();
+            _handleDisconnection();
           }
-          _connectionStateController.add(_currentState);
         },
         onError: (error) {
-          _errorMessage = 'Connection lost: $error';
-          _currentState = BluetoothConnectionState.error;
-          _connectionStateController.add(_currentState);
+          if (_isDisposed) return;
+          print('BluetoothSensorService: Connection error stream: $error');
+          _errorMessage = 'Connection error: $error';
+          _updateState(BluetoothConnectionState.error);
+          _handleDisconnection();
         },
       );
 
-      print('Discovering services...');
+      print('BluetoothSensorService: Discovering services...');
       final services = await device.discoverServices();
+      if (_isDisposed) return;
 
+      characteristic = null;
       for (final service in services) {
-        print('Found service: ${service.uuid}');
         for (final char in service.characteristics) {
-          print(
-            '  Characteristic: ${char.uuid} - Properties: ${char.properties}',
-          );
-
+          // Look for notifying characteristic
           if (char.properties.contains(CharacteristicProperty.notify)) {
             characteristic = char;
 
+            await _notificationSub?.cancel();
             _notificationSub = characteristic!.onValueReceived.listen(
               _handleBytes,
               onError: (error) {
-                print('Notification error: $error');
+                print('BluetoothSensorService: Data reception error: $error');
               },
             );
 
+            print('BluetoothSensorService: Subscribing to notifications for ${char.uuid}');
             await characteristic!.notifications.subscribe();
-            print('Subscribed to notifications for ${char.uuid}');
             break;
           }
         }
+        if (characteristic != null) break;
       }
 
-      _currentState = BluetoothConnectionState.connected;
-      _connectionStateController.add(_currentState);
+      if (_isDisposed) {
+        await disconnect();
+        return;
+      }
+
+      if (characteristic == null) {
+        print('BluetoothSensorService: ERROR - No notify characteristic found');
+        _errorMessage = 'No compatible data service found';
+        _updateState(BluetoothConnectionState.error);
+        await device.disconnect();
+      } else {
+        _updateState(BluetoothConnectionState.connected);
+      }
     } catch (e) {
-      _errorMessage = 'Connection failed: $e';
-      _currentState = BluetoothConnectionState.error;
-      _connectionStateController.add(_currentState);
+      if (_isDisposed) return;
+      print('BluetoothSensorService: Connection failed with exception: $e');
+      _errorMessage = 'Connection failure: $e';
+      _updateState(BluetoothConnectionState.error);
+      _handleDisconnection();
+    } finally {
+      _isConnecting = false;
+    }
+  }
+
+  void _handleDisconnection() {
+    connectedDevice = null;
+    characteristic = null;
+    _receiveBuffer.clear();
+    resetRecordingSession();
+    if (!_isDisposed) {
+      _updateState(BluetoothConnectionState.disconnected);
     }
   }
 
@@ -278,64 +368,86 @@ class BluetoothSensorService {
   }
 
   void _handleBytes(List<int> bytes) {
+    // Only process if still connected and not disposed
+    if (_isDisposed || _currentState != BluetoothConnectionState.connected) return;
+    
     _receiveBuffer.addAll(bytes);
-
-    print(
-      'Received ${bytes.length} bytes, buffer now ${_receiveBuffer.length}',
-    );
-    print(
-      'Hex: ${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
-    );
 
     while (_receiveBuffer.length >= PacketParser.packetSize) {
       final packetBytes = _receiveBuffer.sublist(0, PacketParser.packetSize);
       _receiveBuffer.removeRange(0, PacketParser.packetSize);
-
-      print('Processing full packet of ${packetBytes.length} bytes');
 
       final packets = _parser.feed(packetBytes);
       for (final packet in packets) {
         if (_isRecordingSession) {
           _recordedPackets.add(packet);
         }
-        _packetController.add(packet);
-        print('Parsed packet seq: ${packet.seqNumber}');
+        if (!_packetController.isClosed) {
+          _packetController.add(packet);
+        }
       }
-    }
-
-    if (_receiveBuffer.isNotEmpty) {
-      print('Waiting for more data, ${_receiveBuffer.length} bytes in buffer');
     }
   }
 
   Future<void> disconnect() async {
+    if (_isDisposed) return;
+    print('BluetoothSensorService: Explicit disconnect started');
+    
+    _shouldBeScanning = false;
+    
+    // Stop receiving data immediately by cancelling subscription
+    await _notificationSub?.cancel();
+    _notificationSub = null;
+    
+    // Stop scanning immediately
+    await _scanSub?.cancel();
+    _scanSub = null;
     try {
-      await _notificationSub?.cancel();
-      await characteristic?.unsubscribe();
-      await connectedDevice?.disconnect();
-      await _connectionSub?.cancel();
+      await UniversalBle.stopScan();
+    } catch (_) {}
 
-      connectedDevice = null;
-      characteristic = null;
-      _receiveBuffer.clear();
-      resetRecordingSession();
-
-      _currentState = BluetoothConnectionState.disconnected;
-      _connectionStateController.add(_currentState);
-    } catch (e) {
-      print('Disconnect error: $e');
+    // Clean up notifications subscription on hardware level
+    if (characteristic != null) {
+      try {
+        await characteristic!.notifications.unsubscribe();
+      } catch (_) {}
     }
+
+    // Disconnect device
+    if (connectedDevice != null) {
+      try {
+        print('BluetoothSensorService: Sending disconnect to hardware...');
+        await connectedDevice!.disconnect();
+      } catch (e) {
+        print('BluetoothSensorService: Hardware disconnect error: $e');
+      }
+    }
+    
+    // Clean up internal references
+    await _connectionSub?.cancel();
+    _connectionSub = null;
+    
+    _handleDisconnection();
+    print('BluetoothSensorService: Explicit disconnect complete');
   }
 
   void dispose() {
+    if (_isDisposed) return;
+    print('BluetoothSensorService: DISPOSING service instance');
+    _isDisposed = true;
+    _shouldBeScanning = false;
+    
+    // Immediate cancellation of all logic streams
     _scanSub?.cancel();
     _connectionSub?.cancel();
     _notificationSub?.cancel();
+    
+    // Fire off hardware disconnect (non-blocking)
+    disconnect();
+    
     _packetController.close();
     _scanResultsController.close();
     _connectionStateController.close();
-    _receiveBuffer.clear();
-    _recordedPackets.clear();
   }
 }
 
@@ -370,9 +482,6 @@ class PenRecordingData {
     final accX = packets.map((packet) => packet.axRaw.toDouble()).toList();
     final accY = packets.map((packet) => packet.ayRaw.toDouble()).toList();
 
-    // The current packet schema does not expose PMW3901 x/y channels directly.
-    // Approximate them from integrated acceleration until the firmware sends the
-    // dedicated coordinate fields.
     final x = _integrateSignal(accX);
     final y = _integrateSignal(accY);
 
@@ -398,6 +507,7 @@ class PenRecordingData {
     DateTime? startedAt,
     DateTime? stoppedAt,
   ) {
+    if (packets.isEmpty) return Duration.zero;
     final firstTimestamp = packets.first.timestamp;
     final lastTimestamp = packets.last.timestamp;
 
@@ -433,6 +543,7 @@ class PenRecordingData {
   }
 
   static List<double> _normalizePositiveSignal(List<double> signal) {
+    if (signal.isEmpty) return [];
     final maxValue = signal.fold<double>(
       0,
       (currentMax, value) => value > currentMax ? value : currentMax,
