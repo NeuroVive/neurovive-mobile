@@ -23,5 +23,17 @@
   "failedRecording": "فشل بدء التسجيل، الأذونات مطلوبة",
   "recordOrder": "انطق الصوت",
   "toneA": "”AAA“",
-  "toneO": "”OOO“"
+  "toneO": "”OOO“",
+  "landingTagline": "مساعدك الذكي للكشف عن\nمرض باركنسون",
+  "getStarted": "ابدأ الآن",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "logout": "تسجيل الخروج",
+  "chooseMethod": "اختر طريقة\nالكشف",
+  "voiceTest": "اختبار الصوت",
+  "handwrittenTest": "اختبار الكتابة اليدوية",
+  "smartPenTest": "اختبار القلم الذكي",
+  "next": "التالي",
+  "arabic": "العربية",
+  "english": "الإنجليزية"
 }

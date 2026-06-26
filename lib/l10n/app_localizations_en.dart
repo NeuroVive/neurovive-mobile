@@ -82,4 +82,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toneO => '“OOO”';
+
+  @override
+  String get landingTagline => 'Your AI Assistant for Detecting\nParkinson’s Disease';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get logout => 'Log Out';
+
+  @override
+  String get chooseMethod => 'Choose the method\nof detection';
+
+  @override
+  String get voiceTest => 'Voice Test';
+
+  @override
+  String get handwrittenTest => 'HandWritten Test';
+
+  @override
+  String get smartPenTest => 'Smart Pen Test';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get arabic => 'Arabic';
+
+  @override
+  String get english => 'English';
 }

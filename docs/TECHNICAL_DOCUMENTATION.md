@@ -259,8 +259,8 @@ Primary files:
 2. App navigates to `/voice`.
 3. User starts recording with the large control button.
 4. The app records two phases:
-    - Phase 1: "AAA" for 3 seconds
-    - Phase 2: "OOO" for 3 seconds
+   - Phase 1: "AAA" for 3 seconds
+   - Phase 2: "OOO" for 3 seconds
 5. Recording can be paused/resumed, with cooldown logic to avoid rapid toggling.
 6. After both phases finish, the confirm button becomes active.
 7. Confirm navigates to `/sendvoice` with extra data:

@@ -82,4 +82,40 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get toneO => '”OOO“';
+
+  @override
+  String get landingTagline => 'مساعدك الذكي للكشف عن\nمرض باركنسون';
+
+  @override
+  String get getStarted => 'ابدأ الآن';
+
+  @override
+  String get settings => 'الإعدادات';
+
+  @override
+  String get language => 'اللغة';
+
+  @override
+  String get logout => 'تسجيل الخروج';
+
+  @override
+  String get chooseMethod => 'اختر طريقة\nالكشف';
+
+  @override
+  String get voiceTest => 'اختبار الصوت';
+
+  @override
+  String get handwrittenTest => 'اختبار الكتابة اليدوية';
+
+  @override
+  String get smartPenTest => 'اختبار القلم الذكي';
+
+  @override
+  String get next => 'التالي';
+
+  @override
+  String get arabic => 'العربية';
+
+  @override
+  String get english => 'الإنجليزية';
 }

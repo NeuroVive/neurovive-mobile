@@ -15,15 +15,25 @@
   "voiceHelpThirdMainFirstSubDesc": "Use your normal speaking volume and pitch. Do not try to \"fix\" your voice; the AI needs to hear your natural tone to provide an objective truth.",
   "voiceHelpThirdMainSecondSubTitle": "Don't Worry About Tremors:",
   "voiceHelpThirdMainSecondSubDesc": "If your voice shakes or breaks, do not restart. These subtle changes are exactly what the AI uses to quantify your symptoms accurately.",
-"noNameError": "Error, no name for this route",
+  "noNameError": "Error, no name for this route",
   "uploadingLoading": "Uploading",
   "analyezedSuccessfully": "Analysed successfully",
   "uploadFailed": "Upload failed, please try again later",
   "errorOccured": "Error occured, please make sure you are connected to the internet.",
-  "failedRecording":"Failed to start recording, permission needed",
+  "failedRecording": "Failed to start recording, permission needed",
   "recordOrder": "Say the Pronounce",
-  "toneA" : "“AAA”",
-  "toneO" : "“OOO”"
-
-
+  "toneA": "“AAA”",
+  "toneO": "“OOO”",
+  "landingTagline": "Your AI Assistant for Detecting\nParkinson’s Disease",
+  "getStarted": "Get Started",
+  "settings": "Settings",
+  "language": "Language",
+  "logout": "Log Out",
+  "chooseMethod": "Choose the method\nof detection",
+  "voiceTest": "Voice Test",
+  "handwrittenTest": "HandWritten Test",
+  "smartPenTest": "Smart Pen Test",
+  "next": "Next",
+  "arabic": "Arabic",
+  "english": "English"
 }

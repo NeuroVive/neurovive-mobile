@@ -244,6 +244,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'“OOO”'**
   String get toneO;
+
+  /// No description provided for @landingTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your AI Assistant for Detecting\nParkinson’s Disease'**
+  String get landingTagline;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get logout;
+
+  /// No description provided for @chooseMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the method\nof detection'**
+  String get chooseMethod;
+
+  /// No description provided for @voiceTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Test'**
+  String get voiceTest;
+
+  /// No description provided for @handwrittenTest.
+  ///
+  /// In en, this message translates to:
+  /// **'HandWritten Test'**
+  String get handwrittenTest;
+
+  /// No description provided for @smartPenTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Pen Test'**
+  String get smartPenTest;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @arabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get arabic;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

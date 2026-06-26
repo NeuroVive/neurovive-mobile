@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import './../services/api.dart';
-
 enum JobStatus {
   success, // 0
   error, // 1
@@ -32,7 +30,6 @@ class Response {
           .error: // this will not occuire since we will go back to the send voice screen instead of here
         return "error happened \r\n "
             "Error: $message \r\n";
-
     }
   }
 
@@ -43,15 +40,17 @@ class Response {
         'error' => JobStatus.error,
         _ => JobStatus.error,
       },
-      prediction: json['label'] as String?,
-      confidence: (json['probability'] as num?)?.toDouble(),
+      prediction: (json['label'] ?? json['prediction']) as String?,
+      confidence: ((json['probability'] ?? json['confidence']) as num?)
+          ?.toDouble(),
       message: json['message'] as String?,
     );
   }
 }
 
-final fileUploadProvider =
-AsyncNotifierProvider<FileUploadNotifier, Response?>(FileUploadNotifier.new);
+final fileUploadProvider = AsyncNotifierProvider<FileUploadNotifier, Response?>(
+  FileUploadNotifier.new,
+);
 
 class FileUploadNotifier extends AsyncNotifier<Response?> {
   @override

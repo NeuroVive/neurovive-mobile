@@ -7,85 +7,92 @@ import '../notifiers/voice_upload_notifier.dart';
 import 'api_config.dart';
 
 class Api {
-
   static Future<Response> sendVoice(String path) async {
-    final _baseurl = Uri.parse(await ApiConfig.loadBaseUrl());
+    final baseUrl = Uri.parse(await ApiConfig.loadBaseUrl());
 
-    print("the link is $_baseurl");
+    print("the link is $baseUrl");
     final wavFile = File(path);
 
     final wavBytes = await wavFile.readAsBytes();
 
-    final uri = Uri.parse('$_baseurl/voice');
+    final uri = Uri.parse('$baseUrl/voice');
     final request = http.MultipartRequest('POST', uri);
 
     request.files.add(
       http.MultipartFile.fromBytes(
         'voice', // field name expected by the API
         wavBytes,
-        filename: path
-            .split('/')
-            .last, //as example: my_record.wav
+        filename: path.split('/').last, //as example: my_record.wav
         contentType: http.MediaType('audio', 'wav'),
       ),
     );
 
-
-
-
     final streamedResponse = await request.send();
     final responseBody = await streamedResponse.stream.bytesToString();
 
-    if (streamedResponse.statusCode != 200 && streamedResponse.statusCode != 500) {/// we included the 500 here bc the api will send the error from the ai
-      return Response(
-        status: JobStatus.error,
-      );
+    if (streamedResponse.statusCode != 200 &&
+        streamedResponse.statusCode != 500) {
+      /// we included the 500 here bc the api will send the error from the ai
+      return Response(status: JobStatus.error);
     }
 
     final Map<String, dynamic> json =
-    jsonDecode(responseBody) as Map<String, dynamic>;
+        jsonDecode(responseBody) as Map<String, dynamic>;
 
     return Response.fromJson(json);
   }
 
   static Future<Response> sendImage(String path) async {
-    final _baseurl = Uri.parse(await ApiConfig.loadBaseUrl());
-    print("the link is $_baseurl");
-
-
+    final baseUrl = Uri.parse(await ApiConfig.loadBaseUrl());
+    print("the link is $baseUrl");
 
     final jpgFile = File(path);
 
     final jpgBytes = await jpgFile.readAsBytes();
 
-    final uri = Uri.parse('$_baseurl/image');
+    final uri = Uri.parse('$baseUrl/image');
     final request = http.MultipartRequest('POST', uri);
 
     request.files.add(
       http.MultipartFile.fromBytes(
         'image', // field name expected by the API
         jpgBytes,
-        filename: path
-            .split('/')
-            .last, //as example: my_image.jpg
+        filename: path.split('/').last, //as example: my_image.jpg
         contentType: http.MediaType('image', 'jpeg'),
       ),
     );
 
-
-
-
     final streamedResponse = await request.send();
     final responseBody = await streamedResponse.stream.bytesToString();
 
-    if (streamedResponse.statusCode != 200 && streamedResponse.statusCode != 500) {
-      return Response(
-        status: JobStatus.error,
-      );
+    if (streamedResponse.statusCode != 200 &&
+        streamedResponse.statusCode != 500) {
+      return Response(status: JobStatus.error);
     }
 
     final Map<String, dynamic> json =
-    jsonDecode(responseBody) as Map<String, dynamic>;
+        jsonDecode(responseBody) as Map<String, dynamic>;
+
+    return Response.fromJson(json);
+  }
+
+  static Future<Response> sendPenFeatures(List<double> features) async {
+    final baseUrl = Uri.parse(await ApiConfig.loadBaseUrl());
+    print("the link is $baseUrl");
+
+    final uri = Uri.parse('$baseUrl/pen');
+    final response = await http.post(
+      uri,
+      headers: const {HttpHeaders.contentTypeHeader: 'application/json'},
+      body: jsonEncode({'features': features}),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 500) {
+      return Response(status: JobStatus.error);
+    }
+
+    final Map<String, dynamic> json =
+        jsonDecode(response.body) as Map<String, dynamic>;
 
     return Response.fromJson(json);
   }

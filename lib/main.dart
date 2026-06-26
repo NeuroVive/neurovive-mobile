@@ -3,12 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
+import 'package:neurovive/screens/auth_screen.dart';
 import 'package:neurovive/screens/land_screen.dart';
 import 'package:neurovive/screens/pen_screen.dart';
 import 'package:neurovive/screens/result_screen.dart';
 import 'package:neurovive/screens/send_voice_screen.dart';
+import 'package:neurovive/screens/landing/landing_screen.dart';
+import 'package:neurovive/screens/settings_screen.dart';
 import 'package:neurovive/themes/main_themes.dart';
 import 'package:universal_ble/universal_ble.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import './screens/handwriting_screen.dart';
 import './screens/record_screen2.dart';
@@ -21,22 +25,42 @@ import 'notifiers/voice_upload_notifier.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
-    redirect: (context, state) {
+    redirect: (context, state) async {
+      final prefs = await SharedPreferences.getInstance();
+      final bool firstOpen = prefs.getBool('first_open') ?? true;
+      
+      if (firstOpen && state.uri.path != '/landing') {
+        return '/landing';
+      }
       return null;
     },
 
     routes: [
+      GoRoute(
+        path: '/landing',
+        name: 'Landing',
+        builder: (context, state) => const LandingScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        name: 'Login',
+        builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'Settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           String routeName = state.topRoute?.path ?? '';
           final String pageName =
               state.topRoute?.name ??
-              ///todo: EID, add a switch statement here to make the names of the pages use the localization
               AppLocalizations.of(context)!.noNameError;
           final String currentPath = state.uri.path.split('?').first;
 
           ThemeData theme = switch (routeName) {
-            '/voice' => Mainthemes.greenBackgroundTheme,
+            '/voice' => Mainthemes.blueBackgroundTheme,
             '/handwriting' => Mainthemes.blueBackgroundTheme,
             _ => Mainthemes.whiteBackgroundTheme,
           };
@@ -70,43 +94,55 @@ final routerProvider = Provider<GoRouter>((ref) {
 
                     appBar: AppBar(
                       elevation: 0,
+                      backgroundColor: const Color(0xFF1F3E6C),
                       leading:
-                          !(currentPath == '/' || currentPath == '/sendvoice')
+                          currentPath == '/'
+                          ? IconButton(
+                              onPressed: () {
+                                context.push('/settings');
+                              },
+                              icon: const Icon(Icons.settings),
+                              color: Colors.white,
+                            )
+                          : !(currentPath == '/sendvoice')
                           ? IconButton(
                               onPressed: () {
                                 handleBack(context);
                               },
                               icon: Icon(Neurovive.arrow_left),
-                              color: Theme.of(context).colorScheme.onPrimary,
+                              color: Colors.white,
                             )
                           : const SizedBox.shrink(),
 
                       title: Text(
                         pageName == '#' ? "" : pageName,
-                        style: TextStyle(
-                          fontSize: 22,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       centerTitle: true,
                       actions: [
-                        (currentPath == '/voice' ||
-                                currentPath == '/handwriting')
-                            /// later u will add the pages that has instructions for them here
-                            ? IconButton(
-                                icon: Icon(
-                                  Neurovive.info,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimary,
-                                  size: 30,
-                                ),
-                                onPressed: () {
-                                  showCurrentInstructions(context, currentPath);
-                                },
-                              )
-                            : const SizedBox.shrink(),
+                        if (currentPath == '/')
+                          IconButton(
+                            icon: const Icon(Icons.help_outline, color: Colors.white),
+                            onPressed: () {},
+                          )
+                        else if (currentPath == '/voice' || currentPath == '/handwriting')
+                          IconButton(
+                            icon: Icon(
+                              Neurovive.info,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () {
+                              showCurrentInstructions(context, currentPath);
+                            },
+                          )
+                        else
+                          const SizedBox.shrink(),
                       ],
                     ),
 
@@ -121,7 +157,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/',
-            name: 'NeuroVive',
+            name: 'Choose the method\nof detection',
             pageBuilder: (context, state) => CustomTransitionPage(
               key: state.pageKey,
               child: const LandScreen(),
@@ -147,7 +183,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 key: state.pageKey,
                 child: const RecordScreen2(),
                 transitionDuration: const Duration(milliseconds: 10),
-                // Hero duration
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                       return FadeTransition(opacity: animation, child: child);
@@ -163,7 +198,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 key: state.pageKey,
                 child: const LiveShapeDetectionScreen(),
                 transitionDuration: const Duration(milliseconds: 10),
-                // Hero duration
                 transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
                       return FadeTransition(opacity: animation, child: child);
@@ -180,15 +214,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/sendvoice',
             name: '#',
             builder: (context, state) {
-              // Ensure extra is not null and has the correct type
               final extra = state.extra;
               if (extra is! (String, FileType)) {
                 throw Exception(
                   'Expected a (String, FileType) tuple in state.extra',
                 );
               }
-
-              final (filePath, type) = extra; // destructure tuple
+              final (filePath, type) = extra;
               return SendVoiceScreen(filePath: filePath, type: type);
             },
           ),
@@ -217,7 +249,6 @@ void main() async {
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
-    // DeviceOrientation.portraitDown, // include this if you want upside-down allowed
   ]);
 
   UniversalBle.setLogLevel(BleLogLevel.verbose);
@@ -233,7 +264,7 @@ class MyApp extends ConsumerWidget {
     final locale = ref.watch(localProvider);
     return MaterialApp.router(
       theme: ThemeData(
-        fontFamily: 'Roboto', // Set as default font
+        fontFamily: 'Roboto',
       ),
       debugShowCheckedModeBanner: false,
       routerConfig: ref.watch(routerProvider),

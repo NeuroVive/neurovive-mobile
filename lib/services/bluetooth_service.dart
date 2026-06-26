@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'package:universal_ble/universal_ble.dart';
 import 'dart:typed_data';
+
+import 'package:universal_ble/universal_ble.dart';
 
 // Connection states for UI
 enum BluetoothConnectionState {
@@ -8,20 +9,21 @@ enum BluetoothConnectionState {
   scanning,
   connecting,
   connected,
-  error
+  error,
 }
 
 class BluetoothSensorService {
   final PacketParser _parser = PacketParser();
   final StreamController<SensorPacket> _packetController =
-  StreamController<SensorPacket>.broadcast();
+      StreamController<SensorPacket>.broadcast();
   late StreamController<BleDevice> _scanResultsController =
-  StreamController<BleDevice>.broadcast();
+      StreamController<BleDevice>.broadcast();
   final StreamController<BluetoothConnectionState> _connectionStateController =
-  StreamController<BluetoothConnectionState>.broadcast();
+      StreamController<BluetoothConnectionState>.broadcast();
 
   // Add a buffer for incoming bytes to handle MTU splitting
   final List<int> _receiveBuffer = [];
+  final List<SensorPacket> _recordedPackets = [];
 
   // Streams for UI updates
   Stream<SensorPacket> get packets => _packetController.stream;
@@ -35,12 +37,31 @@ class BluetoothSensorService {
   StreamSubscription? _connectionSub;
   StreamSubscription? _notificationSub;
   bool _isScanning = false;
+  bool _isRecordingSession = false;
+  DateTime? _recordingStartedAt;
+  DateTime? _recordingStoppedAt;
 
-  BluetoothConnectionState _currentState = BluetoothConnectionState.disconnected;
+  BluetoothConnectionState _currentState =
+      BluetoothConnectionState.disconnected;
   String? _errorMessage;
 
   BluetoothConnectionState get currentState => _currentState;
   String? get errorMessage => _errorMessage;
+  bool get isScanning => _isScanning;
+  bool get isRecordingSession => _isRecordingSession;
+  int get recordedSampleCount => _recordedPackets.length;
+  DateTime? get recordingStartedAt => _recordingStartedAt;
+
+  Duration get currentRecordingDuration {
+    if (_recordingStartedAt == null) {
+      return Duration.zero;
+    }
+
+    final endTime = _isRecordingSession
+        ? DateTime.now()
+        : (_recordingStoppedAt ?? DateTime.now());
+    return endTime.difference(_recordingStartedAt!);
+  }
 
   Future<void> initialize() async {
     _currentState = BluetoothConnectionState.disconnected;
@@ -49,27 +70,23 @@ class BluetoothSensorService {
 
   Future<bool> checkAndRequestPermissions() async {
     try {
-      // Check if Bluetooth is available
-      final BleState = await UniversalBle.getBluetoothAvailabilityState();
-      if (BleState == AvailabilityState.unsupported) {
+      final bleState = await UniversalBle.getBluetoothAvailabilityState();
+      if (bleState == AvailabilityState.unsupported) {
         _errorMessage = 'Bluetooth is not available on this device';
         _currentState = BluetoothConnectionState.error;
         _connectionStateController.add(_currentState);
         return false;
       }
 
-      // Check if Bluetooth is enabled
-      if (BleState != AvailabilityState.poweredOn) {
+      if (bleState != AvailabilityState.poweredOn) {
         _errorMessage = 'Please enable Bluetooth';
         _currentState = BluetoothConnectionState.error;
         _connectionStateController.add(_currentState);
         return false;
       }
 
-      // Check permissions
       var status = await UniversalBle.hasPermissions();
       if (status != true) {
-        // Request permissions
         await UniversalBle.requestPermissions();
         status = await UniversalBle.hasPermissions();
         if (status != true) {
@@ -93,9 +110,7 @@ class BluetoothSensorService {
     if (connectedDevice == null) return false;
 
     try {
-      // Try to get services - if this fails, device might be disconnected
-      await connectedDevice!.discoverServices();
-      return true;
+      return connectedDevice!.isConnected;
     } catch (e) {
       print('Device connection check failed: $e');
       return false;
@@ -103,7 +118,6 @@ class BluetoothSensorService {
   }
 
   Future<void> startScan() async {
-    // Check permissions first
     if (!await checkAndRequestPermissions()) {
       return;
     }
@@ -113,14 +127,12 @@ class BluetoothSensorService {
       _currentState = BluetoothConnectionState.scanning;
       _connectionStateController.add(_currentState);
 
-      // Clear previous scan results
       _scanResultsController = StreamController<BleDevice>.broadcast();
-      print("Started scanning");
+      print('Started scanning');
 
-      // Listen for scan results
       _scanSub = UniversalBle.scanStream.listen(
-            (BleDevice bleDevice) {
-          print("Found device: ${bleDevice.name} (${bleDevice.deviceId})");
+        (BleDevice bleDevice) {
+          print('Found device: ${bleDevice.name} (${bleDevice.deviceId})');
           _scanResultsController.add(bleDevice);
         },
         onError: (error) {
@@ -130,10 +142,8 @@ class BluetoothSensorService {
         },
       );
 
-      // Start scanning
       await UniversalBle.startScan();
 
-      // Auto-stop scan after 50 seconds
       Future.delayed(const Duration(seconds: 50), () {
         if (_isScanning) {
           stopScan();
@@ -160,37 +170,34 @@ class BluetoothSensorService {
 
   Future<void> connectToDevice(BleDevice device) async {
     try {
+      _errorMessage = null;
       _currentState = BluetoothConnectionState.connecting;
       _connectionStateController.add(_currentState);
 
-      // Stop scanning first
       await stopScan();
-
-      // Connect to device
       await device.connect();
       connectedDevice = device;
 
-      // REQUEST MTU - This is critical for receiving large packets
       print('Requesting MTU 64...');
       try {
-        int mtu = await device.requestMtu(64);
+        final mtu = await device.requestMtu(64);
         print('MTU negotiated to: $mtu bytes');
-        if (mtu < 43) {
-          print('WARNING: MTU $mtu is less than packet size 43!');
+        if (mtu < PacketParser.packetSize) {
+          print('WARNING: MTU $mtu is less than packet size ${PacketParser.packetSize}');
         }
       } catch (e) {
         print('MTU request failed: $e - continuing with default MTU');
       }
 
-      // Monitor connection state
-      device.pairingStateStream.listen(
-            (state) {
-          print('Connection state changed: $state');
-          if (state == BluetoothConnectionState.connected) {
+      _connectionSub = device.connectionStream.listen(
+        (isConnected) {
+          print('Connection state changed: $isConnected');
+          if (isConnected) {
             _currentState = BluetoothConnectionState.connected;
-          } else if (state == BluetoothConnectionState.disconnected) {
+          } else {
             _currentState = BluetoothConnectionState.disconnected;
             connectedDevice = null;
+            resetRecordingSession();
           }
           _connectionStateController.add(_currentState);
         },
@@ -201,30 +208,26 @@ class BluetoothSensorService {
         },
       );
 
-      // Discover services
       print('Discovering services...');
-      List<BleService> services = await device.discoverServices();
+      final services = await device.discoverServices();
 
-      // Find the characteristic with notify property
-      for (var service in services) {
+      for (final service in services) {
         print('Found service: ${service.uuid}');
-        for (var char in service.characteristics) {
-          print('  Characteristic: ${char.uuid} - Properties: ${char.properties}');
+        for (final char in service.characteristics) {
+          print(
+            '  Characteristic: ${char.uuid} - Properties: ${char.properties}',
+          );
 
           if (char.properties.contains(CharacteristicProperty.notify)) {
             characteristic = char;
 
-            // Listen for incoming bytes
             _notificationSub = characteristic!.onValueReceived.listen(
-                  (value) {
-                _handleBytes(value);
-              },
+              _handleBytes,
               onError: (error) {
                 print('Notification error: $error');
               },
             );
 
-            // Enable notifications
             await characteristic!.notifications.subscribe();
             print('Subscribed to notifications for ${char.uuid}');
             break;
@@ -241,28 +244,62 @@ class BluetoothSensorService {
     }
   }
 
-  // FIXED: Buffer incoming bytes and only parse when we have a full packet
+  void startRecordingSession() {
+    _recordedPackets.clear();
+    _isRecordingSession = true;
+    _recordingStartedAt = DateTime.now();
+    _recordingStoppedAt = null;
+  }
+
+  PenRecordingData stopRecordingSession() {
+    if (!_isRecordingSession) {
+      throw StateError('Recording has not started.');
+    }
+
+    _isRecordingSession = false;
+    _recordingStoppedAt = DateTime.now();
+
+    if (_recordedPackets.isEmpty) {
+      throw StateError('No pen data was recorded.');
+    }
+
+    return PenRecordingData.fromPackets(
+      List<SensorPacket>.unmodifiable(_recordedPackets),
+      startedAt: _recordingStartedAt,
+      stoppedAt: _recordingStoppedAt,
+    );
+  }
+
+  void resetRecordingSession() {
+    _isRecordingSession = false;
+    _recordedPackets.clear();
+    _recordingStartedAt = null;
+    _recordingStoppedAt = null;
+  }
+
   void _handleBytes(List<int> bytes) {
-    // Add to buffer
     _receiveBuffer.addAll(bytes);
 
-    // Debug logging
-    print('Received ${bytes.length} bytes, buffer now ${_receiveBuffer.length}');
-    print('Hex: ${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+    print(
+      'Received ${bytes.length} bytes, buffer now ${_receiveBuffer.length}',
+    );
+    print(
+      'Hex: ${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+    );
 
-    // Process while we have at least a full packet (43 bytes)
-    while (_receiveBuffer.length >= 43) {
-      // Extract one full packet
-      List<int> packetBytes = _receiveBuffer.sublist(0, 43);
-      _receiveBuffer.removeRange(0, 43);
+    while (_receiveBuffer.length >= PacketParser.packetSize) {
+      final packetBytes = _receiveBuffer.sublist(0, PacketParser.packetSize);
+      _receiveBuffer.removeRange(0, PacketParser.packetSize);
 
       print('Processing full packet of ${packetBytes.length} bytes');
 
-      // Parse the packet
-      var packets = _parser.feed(packetBytes);
-      for (var p in packets) {
-        _packetController.add(p);
-        print('Parsed packet seq: ${p.seqNumber}');
+      final packets = _parser.feed(packetBytes);
+      for (final packet in packets) {
+        if (_isRecordingSession) {
+          _recordedPackets.add(packet);
+        }
+        _packetController.add(packet);
+        print('Parsed packet seq: ${packet.seqNumber}');
       }
     }
 
@@ -280,7 +317,8 @@ class BluetoothSensorService {
 
       connectedDevice = null;
       characteristic = null;
-      _receiveBuffer.clear(); // Clear the buffer
+      _receiveBuffer.clear();
+      resetRecordingSession();
 
       _currentState = BluetoothConnectionState.disconnected;
       _connectionStateController.add(_currentState);
@@ -288,8 +326,6 @@ class BluetoothSensorService {
       print('Disconnect error: $e');
     }
   }
-
-  bool get isScanning => _isScanning;
 
   void dispose() {
     _scanSub?.cancel();
@@ -299,6 +335,114 @@ class BluetoothSensorService {
     _scanResultsController.close();
     _connectionStateController.close();
     _receiveBuffer.clear();
+    _recordedPackets.clear();
+  }
+}
+
+class PenRecordingData {
+  const PenRecordingData({
+    required this.x,
+    required this.y,
+    required this.pressure,
+    required this.azimuth,
+    required this.altitude,
+    required this.accX,
+    required this.accY,
+    required this.sampleCount,
+    required this.duration,
+  });
+
+  final List<double> x;
+  final List<double> y;
+  final List<double> pressure;
+  final List<double> azimuth;
+  final List<double> altitude;
+  final List<double> accX;
+  final List<double> accY;
+  final int sampleCount;
+  final Duration duration;
+
+  factory PenRecordingData.fromPackets(
+    List<SensorPacket> packets, {
+    DateTime? startedAt,
+    DateTime? stoppedAt,
+  }) {
+    final accX = packets.map((packet) => packet.axRaw.toDouble()).toList();
+    final accY = packets.map((packet) => packet.ayRaw.toDouble()).toList();
+
+    // The current packet schema does not expose PMW3901 x/y channels directly.
+    // Approximate them from integrated acceleration until the firmware sends the
+    // dedicated coordinate fields.
+    final x = _integrateSignal(accX);
+    final y = _integrateSignal(accY);
+
+    final pressure = _normalizePositiveSignal(
+      packets.map((packet) => packet.tipForceX10.toDouble()).toList(),
+    );
+
+    return PenRecordingData(
+      x: x,
+      y: y,
+      pressure: pressure,
+      azimuth: packets.map((packet) => packet.rollDegrees).toList(),
+      altitude: packets.map((packet) => packet.pitchDegrees).toList(),
+      accX: accX,
+      accY: accY,
+      sampleCount: packets.length,
+      duration: _deriveDuration(packets, startedAt, stoppedAt),
+    );
+  }
+
+  static Duration _deriveDuration(
+    List<SensorPacket> packets,
+    DateTime? startedAt,
+    DateTime? stoppedAt,
+  ) {
+    final firstTimestamp = packets.first.timestamp;
+    final lastTimestamp = packets.last.timestamp;
+
+    if (lastTimestamp >= firstTimestamp) {
+      final duration = Duration(milliseconds: lastTimestamp - firstTimestamp);
+      if (duration > Duration.zero) {
+        return duration;
+      }
+    }
+
+    if (startedAt != null &&
+        stoppedAt != null &&
+        !stoppedAt.isBefore(startedAt)) {
+      return stoppedAt.difference(startedAt);
+    }
+
+    return Duration.zero;
+  }
+
+  static List<double> _integrateSignal(
+    List<double> signal, {
+    double dt = 1.0 / 150.0,
+  }) {
+    var position = 0.0;
+    final integrated = <double>[];
+
+    for (final value in signal) {
+      position += value * dt;
+      integrated.add(position);
+    }
+
+    return integrated;
+  }
+
+  static List<double> _normalizePositiveSignal(List<double> signal) {
+    final maxValue = signal.fold<double>(
+      0,
+      (currentMax, value) => value > currentMax ? value : currentMax,
+    );
+
+    if (maxValue <= 0) {
+      return List<double>.filled(signal.length, 0);
+    }
+
+    return signal.map((value) => (value / maxValue).clamp(0.0, 1.0)).toList();
   }
 }
 
@@ -312,18 +456,35 @@ class SensorPacket {
   final int gxRaw;
   final int gyRaw;
   final int gzRaw;
-  final int pitch;
-  final int roll;
-  final int altitude;
-  final int jerkMag;
-  final int pressureRaw;
-  final int forceGram;
+  final int pitchX100;
+  final int rollX100;
+  final int tipFsr400Raw;
+  final int tipForceX10;
+  final int gripARaw;
+  final int gripBRaw;
+  final int gripMeanX10;
+  final int tremorFreqX100;
+  final int tremorRmsX1000;
+  final int jerkMagX100;
   final int penState;
   final int liftCount;
-  final int tremor;
   final int calAx;
+  final int calAy;
+  final int calAz;
   final int calGx;
+  final int calGy;
+  final int calGz;
   final int checkSum;
+  final int computedCheckSum;
+
+  double get pitchDegrees => pitchX100 / 100.0;
+  double get rollDegrees => rollX100 / 100.0;
+  double get tipForceGrams => tipForceX10 / 10.0;
+  double get gripMeanGrams => gripMeanX10 / 10.0;
+  double get tremorFreqHz => tremorFreqX100 / 100.0;
+  double get tremorRms => tremorRmsX1000 / 1000.0;
+  double get jerkMagnitude => jerkMagX100 / 100.0;
+  bool get isChecksumValid => checkSum == computedCheckSum;
 
   SensorPacket({
     required this.packetType,
@@ -335,40 +496,54 @@ class SensorPacket {
     required this.gxRaw,
     required this.gyRaw,
     required this.gzRaw,
-    required this.pitch,
-    required this.roll,
-    required this.altitude,
-    required this.jerkMag,
-    required this.pressureRaw,
-    required this.forceGram,
+    required this.pitchX100,
+    required this.rollX100,
+    required this.tipFsr400Raw,
+    required this.tipForceX10,
+    required this.gripARaw,
+    required this.gripBRaw,
+    required this.gripMeanX10,
+    required this.tremorFreqX100,
+    required this.tremorRmsX1000,
+    required this.jerkMagX100,
     required this.penState,
     required this.liftCount,
-    required this.tremor,
     required this.calAx,
+    required this.calAy,
+    required this.calAz,
     required this.calGx,
+    required this.calGy,
+    required this.calGz,
     required this.checkSum,
+    required this.computedCheckSum,
   });
 
   @override
   String toString() {
-    return "packetType: $packetType, seqNumber: $seqNumber, timestamp: $timestamp, "
-        "axRaw: $axRaw, ayRaw: $ayRaw, azRaw: $azRaw, gxRaw: $gxRaw, gyRaw: $gyRaw, gzRaw: $gzRaw, "
-        "pitch: $pitch, roll: $roll, altitude: $altitude, jerkMag: $jerkMag, pressureRaw: $pressureRaw, "
-        "forceGram: $forceGram, penState: $penState, liftCount: $liftCount, tremor: $tremor, "
-        "calAx: $calAx, calGx: $calGx, checkSum: $checkSum";
+    return 'packetType: $packetType, seqNumber: $seqNumber, timestamp: $timestamp, '
+        'axRaw: $axRaw, ayRaw: $ayRaw, azRaw: $azRaw, gxRaw: $gxRaw, gyRaw: $gyRaw, gzRaw: $gzRaw, '
+        'pitchX100: $pitchX100, rollX100: $rollX100, tipFsr400Raw: $tipFsr400Raw, '
+        'tipForceX10: $tipForceX10, gripARaw: $gripARaw, gripBRaw: $gripBRaw, '
+        'gripMeanX10: $gripMeanX10, tremorFreqX100: $tremorFreqX100, '
+        'tremorRmsX1000: $tremorRmsX1000, jerkMagX100: $jerkMagX100, '
+        'penState: $penState, liftCount: $liftCount, calAx: $calAx, calAy: $calAy, '
+        'calAz: $calAz, calGx: $calGx, calGy: $calGy, calGz: $calGz, '
+        'checkSum: $checkSum, computedCheckSum: $computedCheckSum, '
+        'isChecksumValid: $isChecksumValid';
   }
 }
 
 class PacketParser {
-  static const int packetSize = 43;
+  static const int packetSize = 53;
+
   final List<int> _buffer = [];
 
   List<SensorPacket> feed(List<int> incoming) {
     _buffer.addAll(incoming);
-    List<SensorPacket> packets = [];
+    final packets = <SensorPacket>[];
 
     while (_buffer.length >= packetSize) {
-      List<int> raw = _buffer.sublist(0, packetSize);
+      final raw = _buffer.sublist(0, packetSize);
       _buffer.removeRange(0, packetSize);
       packets.add(_parsePacket(raw));
     }
@@ -377,91 +552,94 @@ class PacketParser {
   }
 
   SensorPacket _parsePacket(List<int> data) {
-    ByteData byteData = Uint8List.fromList(data).buffer.asByteData();
-    int offset = 0;
+    final byteData = Uint8List.fromList(data).buffer.asByteData();
+    final computedCheckSum = data
+        .take(packetSize - 1)
+        .fold<int>(0, (checksum, byte) => checksum ^ byte);
+    var offset = 0;
 
-    // Read packetType (byte 0)
-    int packetType = byteData.getUint8(offset);
+    final packetType = byteData.getUint8(offset);
     offset += 1;
 
-    // Read seqNumber (byte 1)
-    int seqNumber = byteData.getUint8(offset);
+    final seqNumber = byteData.getUint8(offset);
     offset += 1;
 
-    // Read timestamp (bytes 2-5)
-    int timestamp = byteData.getUint32(offset, Endian.little);
+    final timestamp = byteData.getUint32(offset, Endian.big);
     offset += 4;
 
-    // Read axRaw (bytes 6-7)
-    int axRaw = byteData.getInt16(offset, Endian.little);
+    final axRaw = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read ayRaw (bytes 8-9)
-    int ayRaw = byteData.getInt16(offset, Endian.little);
+    final ayRaw = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read azRaw (bytes 10-11)
-    int azRaw = byteData.getInt16(offset, Endian.little);
+    final azRaw = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read gxRaw (bytes 12-13)
-    int gxRaw = byteData.getInt16(offset, Endian.little);
+    final gxRaw = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read gyRaw (bytes 14-15)
-    int gyRaw = byteData.getInt16(offset, Endian.little);
+    final gyRaw = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read gzRaw (bytes 16-17)
-    int gzRaw = byteData.getInt16(offset, Endian.little);
+    final gzRaw = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read pitch (bytes 18-19)
-    int pitch = byteData.getInt16(offset, Endian.little);
+    final pitchX100 = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read roll (bytes 20-21)
-    int roll = byteData.getInt16(offset, Endian.little);
+    final rollX100 = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read altitude (bytes 22-23)
-    int altitude = byteData.getInt16(offset, Endian.little);
+    final tipFsr400Raw = byteData.getUint16(offset, Endian.big);
     offset += 2;
 
-    // Read jerkMag (bytes 24-25)
-    int jerkMag = byteData.getUint16(offset, Endian.little);
+    final tipForceX10 = byteData.getUint16(offset, Endian.big);
     offset += 2;
 
-    // Read pressureRaw (bytes 26-27)
-    int pressureRaw = byteData.getUint16(offset, Endian.little);
+    final gripARaw = byteData.getUint16(offset, Endian.big);
     offset += 2;
 
-    // Read forceGram (bytes 28-29)
-    int forceGram = byteData.getUint16(offset, Endian.little);
+    final gripBRaw = byteData.getUint16(offset, Endian.big);
     offset += 2;
 
-    // Read penState (byte 30)
-    int penState = byteData.getUint8(offset);
+    final gripMeanX10 = byteData.getUint16(offset, Endian.big);
+    offset += 2;
+
+    final tremorFreqX100 = byteData.getUint16(offset, Endian.big);
+    offset += 2;
+
+    final tremorRmsX1000 = byteData.getUint16(offset, Endian.big);
+    offset += 2;
+
+    final jerkMagX100 = byteData.getUint16(offset, Endian.big);
+    offset += 2;
+
+    final penState = byteData.getUint8(offset);
     offset += 1;
 
-    // Read liftCount (byte 31)
-    int liftCount = byteData.getUint8(offset);
+    final liftCount = byteData.getUint8(offset);
     offset += 1;
 
-    // Read tremor (bytes 32-33)
-    int tremor = byteData.getUint16(offset, Endian.little);
+    final calAx = byteData.getInt16(offset, Endian.big);
     offset += 2;
 
-    // Read calAx (bytes 34-37)
-    int calAx = byteData.getInt32(offset, Endian.little);
-    offset += 4;
+    final calAy = byteData.getInt16(offset, Endian.big);
+    offset += 2;
 
-    // Read calGx (bytes 38-41)
-    int calGx = byteData.getInt32(offset, Endian.little);
-    offset += 4;
+    final calAz = byteData.getInt16(offset, Endian.big);
+    offset += 2;
 
-    // Read checkSum (byte 42)
-    int checkSum = byteData.getUint8(offset);
+    final calGx = byteData.getInt16(offset, Endian.big);
+    offset += 2;
+
+    final calGy = byteData.getInt16(offset, Endian.big);
+    offset += 2;
+
+    final calGz = byteData.getInt16(offset, Endian.big);
+    offset += 2;
+
+    final checkSum = byteData.getUint8(offset);
 
     return SensorPacket(
       packetType: packetType,
@@ -473,18 +651,26 @@ class PacketParser {
       gxRaw: gxRaw,
       gyRaw: gyRaw,
       gzRaw: gzRaw,
-      pitch: pitch,
-      roll: roll,
-      altitude: altitude,
-      jerkMag: jerkMag,
-      pressureRaw: pressureRaw,
-      forceGram: forceGram,
+      pitchX100: pitchX100,
+      rollX100: rollX100,
+      tipFsr400Raw: tipFsr400Raw,
+      tipForceX10: tipForceX10,
+      gripARaw: gripARaw,
+      gripBRaw: gripBRaw,
+      gripMeanX10: gripMeanX10,
+      tremorFreqX100: tremorFreqX100,
+      tremorRmsX1000: tremorRmsX1000,
+      jerkMagX100: jerkMagX100,
       penState: penState,
       liftCount: liftCount,
-      tremor: tremor,
       calAx: calAx,
+      calAy: calAy,
+      calAz: calAz,
       calGx: calGx,
+      calGy: calGy,
+      calGz: calGz,
       checkSum: checkSum,
+      computedCheckSum: computedCheckSum,
     );
   }
 }
