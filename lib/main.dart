@@ -53,11 +53,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       ShellRoute(
         builder: (context, state, child) {
+          final l10n = AppLocalizations.of(context)!;
           String routeName = state.topRoute?.path ?? '';
-          final String pageName =
-              state.topRoute?.name ??
-              AppLocalizations.of(context)!.noNameError;
           final String currentPath = state.uri.path.split('?').first;
+          final String pageName = switch (currentPath) {
+            '/landing' => l10n.landingPage,
+            '/login' => l10n.loginPage,
+            '/' => l10n.chooseMethod,
+            '/voice' => l10n.voiceRecord,
+            '/handwriting' => l10n.handwritingTestPage,
+            '/pen' => l10n.penPage,
+            '/sendvoice' => '',
+            '/results' => l10n.medicalReport,
+            '/settings' => l10n.settings,
+            _ => l10n.noNameError,
+          };
 
           ThemeData theme = switch (routeName) {
             '/voice' => Mainthemes.blueBackgroundTheme,
@@ -109,13 +119,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                               onPressed: () {
                                 handleBack(context);
                               },
-                              icon: Icon(Neurovive.arrow_left),
+                              icon: Transform(
+                                transform: Matrix4.identity()
+                                  ..scale(
+                                    Directionality.of(context) == TextDirection.rtl
+                                        ? -1.0
+                                        : 1.0,
+                                    1.0,
+                                    1.0,
+                                  ),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Neurovive.arrow_left,
+                                  color: Colors.white,
+                                ),
+                              ),
                               color: Colors.white,
                             )
                           : const SizedBox.shrink(),
 
                       title: Text(
-                        pageName == '#' ? "" : pageName,
+                        pageName,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 20,
@@ -125,12 +149,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                       ),
                       centerTitle: true,
                       actions: [
-                        if (currentPath == '/')
-                          IconButton(
-                            icon: const Icon(Icons.help_outline, color: Colors.white),
-                            onPressed: () {},
-                          )
-                        else if (currentPath == '/voice' || currentPath == '/handwriting')
+                        if (currentPath == '/voice' || currentPath == '/handwriting')
                           IconButton(
                             icon: Icon(
                               Neurovive.info,

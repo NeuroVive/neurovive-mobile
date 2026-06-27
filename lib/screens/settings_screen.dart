@@ -20,7 +20,11 @@ class SettingsScreen extends ConsumerWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F3E6C)),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: const Color(0xFF1F3E6C),
+            textDirection: Directionality.of(context),
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(

@@ -189,6 +189,7 @@ Widget _buildHelpInstructionsSheetForVoiceRecord(BuildContext context) {
 // ─────────────────────────────────────────────
 
 Widget _buildHelpInstructionsSheetForHandwriting(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
   final PageController pageController = PageController();
   final ValueNotifier<int> currentPage = ValueNotifier<int>(0);
 
@@ -238,9 +239,9 @@ Widget _buildHelpInstructionsSheetForHandwriting(BuildContext context) {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        const Text(
-                          'Handwriting Test Instructions',
-                          style: TextStyle(
+                        Text(
+                          l10n.handwritingInstructionsTitle,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: spiralBlue,
@@ -277,9 +278,9 @@ Widget _buildHelpInstructionsSheetForHandwriting(BuildContext context) {
                                     ),
                                   ),
                                   const SizedBox(height: 32),
-                                  const Text(
-                                    'Draw a spiral',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.drawSpiral,
+                                    style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
                                       color: Color.fromRGBO(35, 68, 116, 1),
@@ -319,9 +320,9 @@ Widget _buildHelpInstructionsSheetForHandwriting(BuildContext context) {
                                     ),
                                   ),
                                   const SizedBox(height: 32),
-                                  const Text(
-                                    'Take a photo for your spiral',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.takePhotoForSpiral,
+                                    style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
                                       color: Color.fromRGBO(35, 68, 116, 1),
@@ -336,22 +337,22 @@ Widget _buildHelpInstructionsSheetForHandwriting(BuildContext context) {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildTextSection('Preparation:', [
-                                      'Use a blank, unlined white sheet of paper.',
-                                      'Use a dark pen (black or blue ink).',
-                                      'Place the paper on a flat surface.',
+                                    _buildTextSection(l10n.preparationLabel, [
+                                      l10n.preparationBullet1,
+                                      l10n.preparationBullet2,
+                                      l10n.preparationBullet3,
                                     ], teal),
                                     const SizedBox(height: 16),
-                                    _buildTextSection('Drawing the Spiral:', [
-                                      'Start from a dot in the center.',
-                                      'Draw 5 continuous outward rotations.',
-                                      'Draw naturally. Do not hide shakiness.',
+                                    _buildTextSection(l10n.drawingSpiralLabel, [
+                                      l10n.spiralDrawingBullet1,
+                                      l10n.spiralDrawingBullet2,
+                                      l10n.spiralDrawingBullet3,
                                     ], teal),
                                     const SizedBox(height: 16),
-                                    _buildTextSection('Capturing the Photo:', [
-                                      'Ensure good lighting.',
-                                      'Hold phone parallel to paper.',
-                                      'Align spiral inside guide.',
+                                    _buildTextSection(l10n.capturingPhotoLabel, [
+                                      l10n.capturePhotoBullet1,
+                                      l10n.capturePhotoBullet2,
+                                      l10n.capturePhotoBullet3,
                                     ], teal),
                                   ],
                                 ),
@@ -371,12 +372,23 @@ SizedBox(height: 50,),
                                   onPressed: value > 0
                                       ? () => goTo(value - 1)
                                       : null,
-                                  icon: Icon(
-                                    Neurovive.arrow_left,
-                                    size: 20,
-                                    color: value > 0
-                                        ? Color.fromRGBO(35, 68, 116, 1)
-                                        : Color.fromRGBO(162, 162, 162, 1),
+                                  icon: Transform(
+                                    transform: Matrix4.identity()
+                                      ..scale(
+                                        Directionality.of(context) == TextDirection.rtl
+                                            ? -1.0
+                                            : 1.0,
+                                        1.0,
+                                        1.0,
+                                      ),
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      Neurovive.arrow_left,
+                                      size: 20,
+                                      color: value > 0
+                                          ? const Color.fromRGBO(35, 68, 116, 1)
+                                          : const Color.fromRGBO(162, 162, 162, 1),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 40),
@@ -384,12 +396,23 @@ SizedBox(height: 50,),
                                   onPressed: value < totalPages - 1
                                       ? () => goTo(value + 1)
                                       : () => Navigator.of(context).pop(),
-                                  icon: Icon(
-                                    value < totalPages - 1
-                                        ? Neurovive.arrow_right
-                                        : Icons.check_circle_outline,
-                                    size: value < totalPages - 1 ? 20 : 40 ,
-                                    color: Color.fromRGBO(35, 68, 116, 1),
+                                  icon: Transform(
+                                    transform: Matrix4.identity()
+                                      ..scale(
+                                        Directionality.of(context) == TextDirection.rtl
+                                            ? -1.0
+                                            : 1.0,
+                                        1.0,
+                                        1.0,
+                                      ),
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      value < totalPages - 1
+                                          ? Neurovive.arrow_right
+                                          : Icons.check_circle_outline,
+                                      size: value < totalPages - 1 ? 20 : 40,
+                                      color: const Color.fromRGBO(35, 68, 116, 1),
+                                    ),
                                   ),
                                 ),
                               ],

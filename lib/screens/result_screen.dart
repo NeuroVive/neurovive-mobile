@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_localizations.dart';
 import '../notifiers/voice_upload_notifier.dart';
 import '../utils.dart';
 import '../widgets/ai_risk_gauge.dart';
@@ -49,16 +50,17 @@ class _AiRiskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final score = ((result.confidence ?? 0.0) * 100).toInt();
+    final l10n = AppLocalizations.of(context)!;
     final risk = score > 80
-        ? 'High Risk'
+        ? l10n.highRisk
         : score > 50
-            ? 'Moderate Risk'
+            ? l10n.moderateRisk
             : score > 35
-                ? 'Slight Risk'
-                : 'No Risk';
+                ? l10n.slightRisk
+                : l10n.noRisk;
     final output = (result.prediction ?? '').toUpperCase() == 'PD'
-        ? 'has Parkinson'
-        : 'doesn\'t have Parkinson';
+        ? l10n.hasParkinson
+        : l10n.doesNotHaveParkinson;
 
 
 
@@ -74,8 +76,8 @@ class _AiRiskCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'AI Risk Score',
+              Text(
+                l10n.aiRiskScore,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -114,7 +116,7 @@ class _AiRiskCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _label('AI Result:'),
+              _label(l10n.aiResult),
               Text(
                 output,
                 style: _bodyStyle,
@@ -126,7 +128,7 @@ class _AiRiskCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _label('Probability:'),
+              _label(l10n.probability),
               Text(
                 '${(result.confidence! * 100).toInt()}%',
                 style: _bodyStyle,
@@ -146,6 +148,8 @@ class _ErrorResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -156,9 +160,9 @@ class _ErrorResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Center(
+          Center(
             child: Text(
-              'AI Error',
+              l10n.aiError,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -168,7 +172,7 @@ class _ErrorResultCard extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            result.message ?? 'An error occurred while processing the pen data.',
+            result.message ?? l10n.penProcessingError,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -185,7 +189,7 @@ class _ErrorResultCard extends StatelessWidget {
                 foregroundColor: const Color(0xFFBC4B4B),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('Go back'),
+              child: Text(l10n.goBack),
             ),
           ),
         ],

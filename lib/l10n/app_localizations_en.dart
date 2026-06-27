@@ -169,4 +169,154 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connecting => 'Connecting...';
+
+  @override
+  String get voiceRecord => 'Voice Record';
+
+  @override
+  String get handwritingTestPage => 'Handwriting Test';
+
+  @override
+  String get penPage => 'Pen';
+
+  @override
+  String get medicalReport => 'Medical Report';
+
+  @override
+  String get landingPage => 'Welcome';
+
+  @override
+  String get loginPage => 'Login';
+
+  @override
+  String get registerPage => 'Register';
+
+  @override
+  String get hello => 'Hello!';
+
+  @override
+  String get welcomeToNeuroVive => 'Welcome to neuroVive';
+
+  @override
+  String get userName => 'User Name';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get enterUsername => 'Enter your username';
+
+  @override
+  String get enterPassword => 'Enter your password';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account? Register';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account? Login';
+
+  @override
+  String get invalidUsernameOrPassword => 'Invalid username or password';
+
+  @override
+  String get registrationFailed => 'Registration failed';
+
+  @override
+  String get connect => 'Connect';
+
+  @override
+  String get connectToSmartPen => 'Connect to Smart Pen';
+
+  @override
+  String get valueAxis => 'Value';
+
+  @override
+  String get timeAxis => 'Time';
+
+  @override
+  String get handwritingInstructionsTitle => 'Handwriting Test Instructions';
+
+  @override
+  String get drawSpiral => 'Draw a spiral';
+
+  @override
+  String get takePhotoForSpiral => 'Take a photo for your spiral';
+
+  @override
+  String get preparationLabel => 'Preparation:';
+
+  @override
+  String get drawingSpiralLabel => 'Drawing the Spiral:';
+
+  @override
+  String get capturingPhotoLabel => 'Capturing the Photo:';
+
+  @override
+  String get preparationBullet1 => 'Use a blank, unlined white sheet of paper.';
+
+  @override
+  String get preparationBullet2 => 'Use a dark pen (black or blue ink).';
+
+  @override
+  String get preparationBullet3 => 'Place the paper on a flat surface.';
+
+  @override
+  String get spiralDrawingBullet1 => 'Start from a dot in the center.';
+
+  @override
+  String get spiralDrawingBullet2 => 'Draw 5 continuous outward rotations.';
+
+  @override
+  String get spiralDrawingBullet3 => 'Draw naturally. Do not hide shakiness.';
+
+  @override
+  String get capturePhotoBullet1 => 'Ensure good lighting.';
+
+  @override
+  String get capturePhotoBullet2 => 'Hold phone parallel to paper.';
+
+  @override
+  String get capturePhotoBullet3 => 'Align spiral inside guide.';
+
+  @override
+  String get spiralNotDetected => 'No spirals detected in this photo';
+
+  @override
+  String get captureFailed => 'Capture failed';
+
+  @override
+  String get aiRiskScore => 'AI Risk Score';
+
+  @override
+  String get highRisk => 'High Risk';
+
+  @override
+  String get moderateRisk => 'Moderate Risk';
+
+  @override
+  String get slightRisk => 'Slight Risk';
+
+  @override
+  String get noRisk => 'No Risk';
+
+  @override
+  String get aiResult => 'AI Result:';
+
+  @override
+  String get probability => 'Probability:';
+
+  @override
+  String get aiError => 'AI Error';
+
+  @override
+  String get goBack => 'Go back';
+
+  @override
+  String get penProcessingError => 'An error occurred while processing the pen data.';
+
+  @override
+  String get hasParkinson => 'has Parkinson';
+
+  @override
+  String get doesNotHaveParkinson => 'doesn\'t have Parkinson';
 }

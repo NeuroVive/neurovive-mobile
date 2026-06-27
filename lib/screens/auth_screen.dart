@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
+
 import '../services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -47,6 +49,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isSubmitting = true);
 
     final username = _usernameController.text.trim();
@@ -64,7 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (result.success) {
         context.go('/');
       } else {
-        _showMessage(result.message ?? 'Invalid username or password');
+        _showMessage(result.message ?? l10n.invalidUsernameOrPassword);
       }
       return;
     }
@@ -79,7 +82,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (result.success) {
       context.go('/');
     } else {
-      _showMessage(result.message ?? 'Registration failed');
+      _showMessage(result.message ?? l10n.registrationFailed);
     }
   }
 
@@ -96,7 +99,10 @@ class _AuthScreenState extends State<AuthScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  InputDecoration _inputDecoration({required String label, required IconData icon}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+  }) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: const Color(0xFF244E7F)),
@@ -120,6 +126,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -130,11 +138,7 @@ class _AuthScreenState extends State<AuthScreen> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned.fill(
-              child: Container(
-                color: const Color(0xFF244E7F),
-              ),
-            ),
+            Positioned.fill(child: Container(color: const Color(0xFF244E7F))),
             Positioned(
               top: 24,
               left: 0,
@@ -159,19 +163,19 @@ class _AuthScreenState extends State<AuthScreen> {
               right: 180,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Hello!',
-                    style: TextStyle(
+                    l10n.hello,
+                    style: const TextStyle(
                       color: Color(0xFFF6E34D),
                       fontSize: 44,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Welcome to neuroVive',
-                    style: TextStyle(
+                    l10n.welcomeToNeuroVive,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
@@ -219,7 +223,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _isLogin ? 'Login' : 'Register',
+                        _isLogin ? l10n.loginPage : l10n.registerPage,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF244E7F),
@@ -232,12 +236,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         controller: _usernameController,
                         textInputAction: TextInputAction.next,
                         decoration: _inputDecoration(
-                          label: 'User Name',
+                          label: l10n.userName,
                           icon: Icons.person_outline,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Enter your username';
+                            return l10n.enterUsername;
                           }
                           return null;
                         },
@@ -248,27 +252,28 @@ class _AuthScreenState extends State<AuthScreen> {
                         obscureText: _obscurePassword,
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _submit(),
-                        decoration: _inputDecoration(
-                          label: 'Password',
-                          icon: Icons.lock_outline,
-                        ).copyWith(
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              );
-                            },
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: Colors.grey[600],
+                        decoration:
+                            _inputDecoration(
+                              label: l10n.password,
+                              icon: Icons.lock_outline,
+                            ).copyWith(
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Enter your password';
+                            return l10n.enterPassword;
                           }
                           return null;
                         },
@@ -295,7 +300,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                                 )
                               : Text(
-                                  _isLogin ? 'Login' : 'Register',
+                                  _isLogin ? l10n.loginPage : l10n.registerPage,
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -308,8 +313,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         onPressed: _toggleMode,
                         child: Text(
                           _isLogin
-                              ? "Don't have an account? Register"
-                              : "Already have an account? Login",
+                              ? l10n.dontHaveAccount
+                              : l10n.alreadyHaveAccount,
                           style: const TextStyle(color: Color(0xFF244E7F)),
                         ),
                       ),

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:neurovive/icons/neurovive_icons.dart';
+import 'package:neurovive/l10n/app_localizations.dart';
 import 'package:neurovive/screens/send_voice_screen.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'package:path_provider/path_provider.dart';
@@ -112,8 +113,7 @@ class _LiveShapeDetectionScreenState extends State<LiveShapeDetectionScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                //
-                "no spirals detected in this photo",
+                AppLocalizations.of(context)!.spiralNotDetected,
               ),
               duration: Duration(seconds: 2),
             ),
@@ -452,8 +452,8 @@ class _LiveShapeDetectionScreenState extends State<LiveShapeDetectionScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Capture failed'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.captureFailed),
           backgroundColor: Colors.red,
         ),
       );

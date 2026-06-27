@@ -418,6 +418,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connecting...'**
   String get connecting;
+
+  /// No description provided for @voiceRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Record'**
+  String get voiceRecord;
+
+  /// No description provided for @handwritingTestPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Handwriting Test'**
+  String get handwritingTestPage;
+
+  /// No description provided for @penPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pen'**
+  String get penPage;
+
+  /// No description provided for @medicalReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Report'**
+  String get medicalReport;
+
+  /// No description provided for @landingPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get landingPage;
+
+  /// No description provided for @loginPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get loginPage;
+
+  /// No description provided for @registerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get registerPage;
+
+  /// No description provided for @hello.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello!'**
+  String get hello;
+
+  /// No description provided for @welcomeToNeuroVive.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to neuroVive'**
+  String get welcomeToNeuroVive;
+
+  /// No description provided for @userName.
+  ///
+  /// In en, this message translates to:
+  /// **'User Name'**
+  String get userName;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @enterUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username'**
+  String get enterUsername;
+
+  /// No description provided for @enterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get enterPassword;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Register'**
+  String get dontHaveAccount;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Login'**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @invalidUsernameOrPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid username or password'**
+  String get invalidUsernameOrPassword;
+
+  /// No description provided for @registrationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration failed'**
+  String get registrationFailed;
+
+  /// No description provided for @connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connect;
+
+  /// No description provided for @connectToSmartPen.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Smart Pen'**
+  String get connectToSmartPen;
+
+  /// No description provided for @valueAxis.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get valueAxis;
+
+  /// No description provided for @timeAxis.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get timeAxis;
+
+  /// No description provided for @handwritingInstructionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Handwriting Test Instructions'**
+  String get handwritingInstructionsTitle;
+
+  /// No description provided for @drawSpiral.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw a spiral'**
+  String get drawSpiral;
+
+  /// No description provided for @takePhotoForSpiral.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo for your spiral'**
+  String get takePhotoForSpiral;
+
+  /// No description provided for @preparationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparation:'**
+  String get preparationLabel;
+
+  /// No description provided for @drawingSpiralLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drawing the Spiral:'**
+  String get drawingSpiralLabel;
+
+  /// No description provided for @capturingPhotoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Capturing the Photo:'**
+  String get capturingPhotoLabel;
+
+  /// No description provided for @preparationBullet1.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a blank, unlined white sheet of paper.'**
+  String get preparationBullet1;
+
+  /// No description provided for @preparationBullet2.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a dark pen (black or blue ink).'**
+  String get preparationBullet2;
+
+  /// No description provided for @preparationBullet3.
+  ///
+  /// In en, this message translates to:
+  /// **'Place the paper on a flat surface.'**
+  String get preparationBullet3;
+
+  /// No description provided for @spiralDrawingBullet1.
+  ///
+  /// In en, this message translates to:
+  /// **'Start from a dot in the center.'**
+  String get spiralDrawingBullet1;
+
+  /// No description provided for @spiralDrawingBullet2.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw 5 continuous outward rotations.'**
+  String get spiralDrawingBullet2;
+
+  /// No description provided for @spiralDrawingBullet3.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw naturally. Do not hide shakiness.'**
+  String get spiralDrawingBullet3;
+
+  /// No description provided for @capturePhotoBullet1.
+  ///
+  /// In en, this message translates to:
+  /// **'Ensure good lighting.'**
+  String get capturePhotoBullet1;
+
+  /// No description provided for @capturePhotoBullet2.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold phone parallel to paper.'**
+  String get capturePhotoBullet2;
+
+  /// No description provided for @capturePhotoBullet3.
+  ///
+  /// In en, this message translates to:
+  /// **'Align spiral inside guide.'**
+  String get capturePhotoBullet3;
+
+  /// No description provided for @spiralNotDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No spirals detected in this photo'**
+  String get spiralNotDetected;
+
+  /// No description provided for @captureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture failed'**
+  String get captureFailed;
+
+  /// No description provided for @aiRiskScore.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Risk Score'**
+  String get aiRiskScore;
+
+  /// No description provided for @highRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'High Risk'**
+  String get highRisk;
+
+  /// No description provided for @moderateRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate Risk'**
+  String get moderateRisk;
+
+  /// No description provided for @slightRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Slight Risk'**
+  String get slightRisk;
+
+  /// No description provided for @noRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'No Risk'**
+  String get noRisk;
+
+  /// No description provided for @aiResult.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Result:'**
+  String get aiResult;
+
+  /// No description provided for @probability.
+  ///
+  /// In en, this message translates to:
+  /// **'Probability:'**
+  String get probability;
+
+  /// No description provided for @aiError.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Error'**
+  String get aiError;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get goBack;
+
+  /// No description provided for @penProcessingError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while processing the pen data.'**
+  String get penProcessingError;
+
+  /// No description provided for @hasParkinson.
+  ///
+  /// In en, this message translates to:
+  /// **'has Parkinson'**
+  String get hasParkinson;
+
+  /// No description provided for @doesNotHaveParkinson.
+  ///
+  /// In en, this message translates to:
+  /// **'doesn\'t have Parkinson'**
+  String get doesNotHaveParkinson;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

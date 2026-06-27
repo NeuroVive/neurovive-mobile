@@ -89,7 +89,18 @@ class _LandScreenState extends ConsumerState<LandScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.chevron_right, size: 28),
+                        Transform(
+                          transform: Matrix4.identity()
+                            ..scale(
+                              Directionality.of(context) == TextDirection.rtl
+                                  ? -1.0
+                                  : 1.0,
+                              1.0,
+                              1.0,
+                            ),
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.chevron_right, size: 28),
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           l10n.next,

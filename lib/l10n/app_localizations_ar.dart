@@ -169,4 +169,154 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get connecting => 'جاري الاتصال...';
+
+  @override
+  String get voiceRecord => 'تسجيل الصوت';
+
+  @override
+  String get handwritingTestPage => 'اختبار الكتابة اليدوية';
+
+  @override
+  String get penPage => 'القلم';
+
+  @override
+  String get medicalReport => 'التقرير الطبي';
+
+  @override
+  String get landingPage => 'مرحبًا';
+
+  @override
+  String get loginPage => 'تسجيل الدخول';
+
+  @override
+  String get registerPage => 'إنشاء حساب';
+
+  @override
+  String get hello => 'مرحبًا!';
+
+  @override
+  String get welcomeToNeuroVive => 'مرحبًا بك في neuroVive';
+
+  @override
+  String get userName => 'اسم المستخدم';
+
+  @override
+  String get password => 'كلمة المرور';
+
+  @override
+  String get enterUsername => 'أدخل اسم المستخدم';
+
+  @override
+  String get enterPassword => 'أدخل كلمة المرور';
+
+  @override
+  String get dontHaveAccount => 'ليس لديك حساب؟ إنشاء حساب';
+
+  @override
+  String get alreadyHaveAccount => 'لديك حساب بالفعل؟ تسجيل الدخول';
+
+  @override
+  String get invalidUsernameOrPassword => 'اسم المستخدم أو كلمة المرور غير صحيحة';
+
+  @override
+  String get registrationFailed => 'فشل إنشاء الحساب';
+
+  @override
+  String get connect => 'اتصال';
+
+  @override
+  String get connectToSmartPen => 'الاتصال بالقلم الذكي';
+
+  @override
+  String get valueAxis => 'القيمة';
+
+  @override
+  String get timeAxis => 'الوقت';
+
+  @override
+  String get handwritingInstructionsTitle => 'إرشادات اختبار الكتابة اليدوية';
+
+  @override
+  String get drawSpiral => 'ارسم لولبًا';
+
+  @override
+  String get takePhotoForSpiral => 'التقط صورة للولب الخاص بك';
+
+  @override
+  String get preparationLabel => 'التحضير:';
+
+  @override
+  String get drawingSpiralLabel => 'رسم اللولب:';
+
+  @override
+  String get capturingPhotoLabel => 'التقاط الصورة:';
+
+  @override
+  String get preparationBullet1 => 'استخدم ورقة بيضاء خالية من الخطوط.';
+
+  @override
+  String get preparationBullet2 => 'استخدم قلمًا داكنًا (أزرق أو أسود).';
+
+  @override
+  String get preparationBullet3 => 'ضع الورقة على سطح مستوٍ.';
+
+  @override
+  String get spiralDrawingBullet1 => 'ابدأ من نقطة في الوسط.';
+
+  @override
+  String get spiralDrawingBullet2 => 'ارسم 5 دورات خارجية متتالية.';
+
+  @override
+  String get spiralDrawingBullet3 => 'ارسم بشكل طبيعي. لا تخفِ الاهتزاز.';
+
+  @override
+  String get capturePhotoBullet1 => 'تأكد من الإضاءة الجيدة.';
+
+  @override
+  String get capturePhotoBullet2 => 'أمسك الهاتف موازياً للورقة.';
+
+  @override
+  String get capturePhotoBullet3 => 'ضع اللولب داخل الدليل.';
+
+  @override
+  String get spiralNotDetected => 'لم يتم اكتشاف أي لولب في هذه الصورة';
+
+  @override
+  String get captureFailed => 'فشل الالتقاط';
+
+  @override
+  String get aiRiskScore => 'درجة خطورة الذكاء الاصطناعي';
+
+  @override
+  String get highRisk => 'مخاطر عالية';
+
+  @override
+  String get moderateRisk => 'مخاطر متوسطة';
+
+  @override
+  String get slightRisk => 'مخاطر بسيطة';
+
+  @override
+  String get noRisk => 'بدون مخاطر';
+
+  @override
+  String get aiResult => 'نتيجة الذكاء الاصطناعي:';
+
+  @override
+  String get probability => 'الاحتمال:';
+
+  @override
+  String get aiError => 'خطأ الذكاء الاصطناعي';
+
+  @override
+  String get goBack => 'العودة';
+
+  @override
+  String get penProcessingError => 'حدث خطأ أثناء معالجة بيانات القلم.';
+
+  @override
+  String get hasParkinson => 'يعاني من باركنسون';
+
+  @override
+  String get doesNotHaveParkinson => 'لا يعاني من باركنسون';
 }
