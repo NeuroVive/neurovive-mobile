@@ -225,6 +225,9 @@ class _BluetoothConnectionPageState
   ) {
     final isConnected = state == BluetoothConnectionState.connected;
     final isRecording = service.isRecordingSession;
+    final smartPenState = ref.watch(smartPenNotifierProvider);
+    final isBusy = smartPenState.isComputing || smartPenState.isUploading;
+    final canInteract = isConnected && !isBusy;
 
     return Container(
       width: double.infinity,
@@ -250,7 +253,7 @@ class _BluetoothConnectionPageState
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: isConnected
+              onPressed: canInteract
                   ? () async {
                       if (isRecording) {
                         try {
@@ -304,10 +307,22 @@ class _BluetoothConnectionPageState
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(isRecording ? Icons.stop : Icons.play_arrow, size: 28),
+                  if (isBusy)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    Icon(isRecording ? Icons.stop : Icons.play_arrow, size: 28),
                   const SizedBox(width: 8),
                   Text(
-                    isRecording ? l10n.stopRecording : l10n.startRecording,
+                    isBusy
+                        ? (smartPenState.isUploading ? 'Uploading…' : 'Processing…')
+                        : (isRecording ? l10n.stopRecording : l10n.startRecording),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

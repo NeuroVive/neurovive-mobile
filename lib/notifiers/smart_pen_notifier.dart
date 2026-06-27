@@ -64,6 +64,15 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
       List<int>? buttonStatus;
       final extractionErrors = <String>[];
 
+      if (recording.sampleCount < 5 || recording.x.length < 5) {
+        state = state.copyWith(
+          isComputing: false,
+          isUploading: false,
+          error: 'Recording was too short to extract features.',
+        );
+        return null;
+      }
+
       try {
         features = _service.computeFeatures(
           x: recording.x,
@@ -100,8 +109,6 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
 
       final payload = <String, dynamic>{
         if (features != null) 'features': features,
-        if (statistics != null) 'statistics': statistics,
-        if (buttonStatus != null) 'button_status': buttonStatus,
       };
 
       if (payload.isEmpty) {
@@ -122,7 +129,6 @@ class SmartPenNotifier extends Notifier<SmartPenState> {
 
       state = state.copyWith(isUploading: true);
       final aiResult = await Api.sendPenData(payload);
-
       if (aiResult.status == JobStatus.error) {
         state = state.copyWith(
           isUploading: false,
