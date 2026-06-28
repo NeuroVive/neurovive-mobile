@@ -52,10 +52,11 @@
   "motionSmoothness": "سلاسة الحركة",
   "pressureIndex": "مؤشر عدم انتظام الضغط",
   "viewFullReport": "عرض التقرير الكامل",
+  "waitingForAiResponse": "في انتظار استجابة الذكاء الاصطناعي...",
   "connecting": "جاري الاتصال...",
   "voiceRecord": "تسجيل الصوت",
   "handwritingTestPage": "اختبار الكتابة اليدوية",
-  "penPage": "القلم",
+  "penPage": "القلم الذكي",
   "medicalReport": "التقرير الطبي",
   "landingPage": "مرحبًا",
   "loginPage": "تسجيل الدخول",
@@ -102,5 +103,6 @@
   "goBack": "العودة",
   "penProcessingError": "حدث خطأ أثناء معالجة بيانات القلم.",
   "hasParkinson": "يعاني من باركنسون",
-  "doesNotHaveParkinson": "لا يعاني من باركنسون"
+  "doesNotHaveParkinson": "لا يعاني من باركنسون",
+        "confidence": "الثقة"
 }

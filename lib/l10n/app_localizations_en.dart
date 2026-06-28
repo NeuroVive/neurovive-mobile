@@ -168,6 +168,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewFullReport => 'View Full Report';
 
   @override
+  String get waitingForAiResponse => 'Waiting for AI response...';
+
+  @override
   String get connecting => 'Connecting...';
 
   @override
@@ -177,7 +180,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get handwritingTestPage => 'Handwriting Test';
 
   @override
-  String get penPage => 'Pen';
+  String get penPage => 'Smart Pen';
 
   @override
   String get medicalReport => 'Medical Report';
@@ -319,4 +322,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get doesNotHaveParkinson => 'doesn\'t have Parkinson';
+
+  @override
+  String get confidence => 'confidence';
 }

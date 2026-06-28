@@ -413,6 +413,12 @@ abstract class AppLocalizations {
   /// **'View Full Report'**
   String get viewFullReport;
 
+  /// No description provided for @waitingForAiResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for AI response...'**
+  String get waitingForAiResponse;
+
   /// No description provided for @connecting.
   ///
   /// In en, this message translates to:
@@ -434,7 +440,7 @@ abstract class AppLocalizations {
   /// No description provided for @penPage.
   ///
   /// In en, this message translates to:
-  /// **'Pen'**
+  /// **'Smart Pen'**
   String get penPage;
 
   /// No description provided for @medicalReport.
@@ -718,6 +724,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'doesn\'t have Parkinson'**
   String get doesNotHaveParkinson;
+
+  /// No description provided for @confidence.
+  ///
+  /// In en, this message translates to:
+  /// **'confidence'**
+  String get confidence;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

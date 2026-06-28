@@ -52,10 +52,11 @@
   "motionSmoothness": "Motion Smoothness",
   "pressureIndex": "Pressure Irregularity Index",
   "viewFullReport": "View Full Report",
+  "waitingForAiResponse": "Waiting for AI response...",
   "connecting": "Connecting...",
   "voiceRecord": "Voice Record",
   "handwritingTestPage": "Handwriting Test",
-  "penPage": "Pen",
+  "penPage": "Smart Pen",
   "medicalReport": "Medical Report",
   "landingPage": "Welcome",
   "loginPage": "Login",
@@ -102,5 +103,6 @@
   "goBack": "Go back",
   "penProcessingError": "An error occurred while processing the pen data.",
   "hasParkinson": "has Parkinson",
-  "doesNotHaveParkinson": "doesn't have Parkinson"
+  "doesNotHaveParkinson": "doesn't have Parkinson",
+  "confidence": "confidence"
 }

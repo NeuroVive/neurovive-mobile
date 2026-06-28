@@ -12,11 +12,27 @@ class Response {
   final double? confidence;
   final String? message;
 
+  // Pen AI-specific values.
+  final double? pressureIndex;
+  final double? motionSmoothness;
+  final double? tremorScore;
+  final List<double>? pressureSeries;
+  final List<double>? accelerationSeries;
+  final List<double>? tremorSeries;
+  final List<double>? radarValues;
+
   Response({
     required this.status,
     this.prediction,
     this.confidence,
     this.message,
+    this.pressureIndex,
+    this.motionSmoothness,
+    this.tremorScore,
+    this.pressureSeries,
+    this.accelerationSeries,
+    this.tremorSeries,
+    this.radarValues,
   });
 
   @override
@@ -34,17 +50,50 @@ class Response {
   }
 
   factory Response.fromJson(Map<String, dynamic> json) {
+    final statusValue = json['status'];
+    final status = statusValue == null
+        ? JobStatus.success
+        : switch (statusValue) {
+            'success' => JobStatus.success,
+            'error' => JobStatus.error,
+            _ => JobStatus.error,
+          };
+
     return Response(
-      status: switch (json['status']) {
-        'success' => JobStatus.success,
-        'error' => JobStatus.error,
-        _ => JobStatus.error,
-      },
+      status: status,
       prediction: (json['label'] ?? json['prediction']) as String?,
       confidence: ((json['probability'] ?? json['confidence']) as num?)
           ?.toDouble(),
       message: json['message'] as String?,
+      pressureIndex: _tryParseDouble(json['pressureIndex'] ?? json['pressure_index']),
+      motionSmoothness:
+          _tryParseDouble(json['motionSmoothness'] ?? json['motion_smoothness']),
+      tremorScore: _tryParseDouble(json['tremorScore'] ?? json['tremor_score']),
+      pressureSeries: _tryParseDoubleList(
+          json['pressureSeries'] ?? json['pressure_series']),
+      accelerationSeries: _tryParseDoubleList(
+          json['accelerationSeries'] ?? json['acceleration_series']),
+      tremorSeries:
+          _tryParseDoubleList(json['tremorSeries'] ?? json['tremor_series']),
+      radarValues: _tryParseDoubleList(
+          json['radarValues'] ?? json['radar_values'] ?? json['values'] ?? json['radar']),
     );
+  }
+
+  static double? _tryParseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  static List<double>? _tryParseDoubleList(dynamic value) {
+    if (value is List) {
+      return value
+          .map((e) => _tryParseDouble(e) ?? 0.0)
+          .toList(growable: false);
+    }
+    return null;
   }
 }
 

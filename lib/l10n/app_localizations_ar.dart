@@ -168,6 +168,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewFullReport => 'عرض التقرير الكامل';
 
   @override
+  String get waitingForAiResponse => 'في انتظار استجابة الذكاء الاصطناعي...';
+
+  @override
   String get connecting => 'جاري الاتصال...';
 
   @override
@@ -177,7 +180,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get handwritingTestPage => 'اختبار الكتابة اليدوية';
 
   @override
-  String get penPage => 'القلم';
+  String get penPage => 'القلم الذكي';
 
   @override
   String get medicalReport => 'التقرير الطبي';
@@ -319,4 +322,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get doesNotHaveParkinson => 'لا يعاني من باركنسون';
+
+  @override
+  String get confidence => 'الثقة';
 }
